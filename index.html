@@ -218,7 +218,7 @@
     lastTick = currentIndex;
 
     const tickClone = tickSound.cloneNode(); 
-    tickClone.volume = 0.5;
+    tickClone.volume = 1.5;
     tickClone.play().catch(() => {});
 
     if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
