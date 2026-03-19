@@ -134,119 +134,124 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
+tg.ready();
+tg.expand();
 
-        const tickSound = new Audio('opencase_tick_sound.mp3');
-        const winSound = new Audio('opencase_win_sound.mp3');
-        
-        function unlockAudio() {
-            tickSound.play().then(() => { tickSound.pause(); tickSound.currentTime = 0; });
-            winSound.play().then(() => { winSound.pause(); winSound.currentTime = 0; });
-            document.removeEventListener('click', unlockAudio);
-        }
-        document.addEventListener('click', unlockAudio);
+// 1. СОЗДАЕМ ПУЛ ЗВУКОВ (25 штук хватит для любого "хруста")
+const tickPool = Array.from({ length: 25 }, () => new Audio('opencase_tick_sound.mp3'));
+let tickIndex = 0;
+const winSound = new Audio('opencase_win_sound.mp3');
 
-        const characters = [
-            { name: "Amour plastique", image: "https://i.ibb.co/s9cpgL5b/zxz.png", rarity: "Обычная", color: "#A0A0A0", weight: 41 },
-            { name: "Я НЕ", image: "https://i.ibb.co/6RzPJ2PK/Picsart-26-03-19-17-28-57-544.jpg", rarity: "Редкая", color: "#3498DB", weight: 26 },
-            { name: "КОРОЛЬ", image: "https://i.ibb.co/ZpSGBcvc/image.png", rarity: "Сверхредкая", color: "#3442db", weight: 20 },
-            { name: "ПАРНУХА", image: "https://i.ibb.co/ZpSGBcvc/image.png", rarity: "Эпическая", color: "#9B59B6", weight: 10 },
-            { name: "СЕКРЕТНЫЙ КВАЗ", image: "https://placehold.co/400x400/gold/black?text=Легенда", rarity: "Легендарная", color: "#F1C40F", weight: 3 }
-        ];
+// Функция для запуска звука без прерывания предыдущих
+function playTick() {
+    const sound = tickPool[tickIndex];
+    sound.currentTime = 0; // Сбрасываем конкретно ЭТОТ объект (он всё равно уже молчит)
+    sound.play().catch(() => {});
+    tickIndex = (tickIndex + 1) % tickPool.length; // Берем следующий объект для следующей карточки
+}
 
-        const track = document.getElementById('track');
-        const btn = document.getElementById('spin-btn');
-        const caseWidth = 150;
-        const winIndex = 75;
+// Разблокировка звука для мобильных устройств
+function unlockAudio() {
+    tickPool.forEach(s => {
+        s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(()=>{});
+    });
+    winSound.play().then(() => { winSound.pause(); winSound.currentTime = 0; }).catch(()=>{});
+    document.removeEventListener('click', unlockAudio);
+}
+document.addEventListener('click', unlockAudio);
 
-        function getRandomChar() {
-            let total = characters.reduce((s, c) => s + c.weight, 0);
-            let rnd = Math.random() * total;
-            let sum = 0;
-            for (let c of characters) {
-                sum += c.weight;
-                if (rnd <= sum) return c;
-            }
-        }
+const characters = [
+    { name: "Amour plastique", image: "https://i.ibb.co/s9cpgL5b/zxz.png", rarity: "Обычная", color: "#A0A0A0", weight: 41 },
+    { name: "Я НЕ", image: "https://i.ibb.co/6RzPJ2PK/Picsart-26-03-19-17-28-57-544.jpg", rarity: "Редкая", color: "#3498DB", weight: 26 },
+    { name: "КОРОЛЬ", image: "https://i.ibb.co/ZpSGBcvc/image.png", rarity: "Сверхредкая", color: "#3442db", weight: 20 },
+    { name: "ПАРНУХА", image: "https://i.ibb.co/ZpSGBcvc/image.png", rarity: "Эпическая", color: "#9B59B6", weight: 10 },
+    { name: "СЕКРЕТНЫЙ КВАЗ", image: "https://placehold.co/400x400/gold/black?text=Легенда", rarity: "Легендарная", color: "#F1C40F", weight: 3 }
+];
 
-        function generateTrack(winner) {
-            track.innerHTML = '';
-            for (let i = 0; i < 90; i++) {
-                let char = (i === winIndex) ? winner : getRandomChar();
-                const div = document.createElement('div');
-                div.className = 'item';
-                let glow = char.weight <= 10 ? `box-shadow: inset 0 0 20px ${char.color}; border-color: ${char.color};` : "";
-                div.innerHTML = `
-                    <div class="item-content" style="${glow}">
-                        <img src="${char.image}">
-                        <div class="item-name">${char.name}</div>
-                        <div class="item-rarity" style="background: ${char.color}"></div>
-                    </div>
-                `;
-                track.appendChild(div);
-            }
-        }
+const track = document.getElementById('track');
+const btn = document.getElementById('spin-btn');
+const caseWidth = 150;
+const winIndex = 75;
 
-        let isSpinning = false;
-
-        btn.addEventListener('click', () => {
-            if (isSpinning) return;
-            const winner = getRandomChar();
-            generateTrack(winner);
-            
-            isSpinning = true;
-            btn.disabled = true;
-
-            track.style.transition = 'none';
-            track.style.transform = 'translateX(0px)';
-            
-            setTimeout(() => {
-                const center = document.querySelector('.roulette-wrapper').offsetWidth / 2;
-                const randomShift = Math.floor(Math.random() * 80) - 40;
-                const stopPos = (winIndex * caseWidth) + (caseWidth / 2) - center + randomShift;
-                
-                track.style.transition = 'transform 6s cubic-bezier(0.1, 0, 0.1, 1)';
-                track.style.transform = `translateX(-${stopPos}px)`;
-
-                let lastTick = 0;
-                const checkTick = () => {
-                    const currentPos = Math.abs(track.getBoundingClientRect().left);
-                    const currentIndex = Math.floor((currentPos + center) / caseWidth);
-                   
-                   if (currentIndex > lastTick) {
-    lastTick = currentIndex;
-
-    const tickClone = tickSound.cloneNode(); 
-    
-    tickClone.volume = 1.0; 
-    
-    tickClone.play().catch(e => console.log("Sound error:", e));
-
-    if (window.Telegram && tg.HapticFeedback) {
-        tg.HapticFeedback.impactOccurred('medium');
+function getRandomChar() {
+    let total = characters.reduce((s, c) => s + c.weight, 0);
+    let rnd = Math.random() * total;
+    let sum = 0;
+    for (let c of characters) {
+        sum += c.weight;
+        if (rnd <= sum) return c;
     }
 }
-                    if (isSpinning) requestAnimationFrame(checkTick);
-                };
-                checkTick();
-            }, 100);
 
-            setTimeout(() => {
-                isSpinning = false;
-                btn.disabled = false;
-                document.getElementById('win-img').src = winner.image;
-                document.getElementById('win-img').style.borderColor = winner.color;
-                document.getElementById('win-name').innerText = winner.name;
-                document.getElementById('win-rarity-text').innerText = winner.rarity;
-                document.getElementById('win-rarity-text').style.color = winner.color;
-                document.getElementById('win-overlay').style.display = 'flex';
-                winSound.play().catch(()=>{});
-                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-            }, 6200);
-        });
+function generateTrack(winner) {
+    track.innerHTML = '';
+    for (let i = 0; i < 90; i++) {
+        let char = (i === winIndex) ? winner : getRandomChar();
+        const div = document.createElement('div');
+        div.className = 'item';
+        let glow = char.weight <= 10 ? `box-shadow: inset 0 0 20px ${char.color}; border-color: ${char.color};` : "";
+        div.innerHTML = `
+            <div class="item-content" style="${glow}">
+                <img src="${char.image}">
+                <div class="item-name">${char.name}</div>
+                <div class="item-rarity" style="background: ${char.color}"></div>
+            </div>
+        `;
+        track.appendChild(div);
+    }
+}
 
-        generateTrack(characters[0]);
+let isSpinning = false;
+
+btn.addEventListener('click', () => {
+    if (isSpinning) return;
+    const winner = getRandomChar();
+    generateTrack(winner);
+    
+    isSpinning = true;
+    btn.disabled = true;
+
+    track.style.transition = 'none';
+    track.style.transform = 'translateX(0px)';
+    
+    setTimeout(() => {
+        const center = document.querySelector('.roulette-wrapper').offsetWidth / 2;
+        const randomShift = Math.floor(Math.random() * 80) - 40;
+        const stopPos = (winIndex * caseWidth) + (caseWidth / 2) - center + randomShift;
+        
+        track.style.transition = 'transform 6s cubic-bezier(0.1, 0, 0.1, 1)';
+        track.style.transform = `translateX(-${stopPos}px)`;
+
+        let lastTick = 0;
+        const checkTick = () => {
+            const currentPos = Math.abs(track.getBoundingClientRect().left);
+            const currentIndex = Math.floor((currentPos + center) / caseWidth);
+            
+            if (currentIndex > lastTick) {
+                lastTick = currentIndex;
+                playTick(); // ВЫЗОВ ИЗ ПУЛА
+                if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+            }
+            if (isSpinning) requestAnimationFrame(checkTick);
+        };
+        checkTick();
+    }, 100);
+
+    setTimeout(() => {
+        isSpinning = false;
+        btn.disabled = false;
+        document.getElementById('win-img').src = winner.image;
+        document.getElementById('win-img').style.borderColor = winner.color;
+        document.getElementById('win-name').innerText = winner.name;
+        document.getElementById('win-rarity-text').innerText = winner.rarity;
+        document.getElementById('win-rarity-text').style.color = winner.color;
+        document.getElementById('win-overlay').style.display = 'flex';
+        winSound.play().catch(()=>{});
+        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    }, 6200);
+});
+
+generateTrack(characters[0]);
     </script>
 </body>
 </html>
