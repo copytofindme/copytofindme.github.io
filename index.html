@@ -137,9 +137,9 @@
         tg.ready();
         tg.expand();
 
-    const tickSound = new Audio('https://zvukipro.com/uploads/files/2020-10/1604126048_go-new-gambling.mp3');
-    const winSound = new Audio('https://zvukipro.com/uploads/files/2020-10/1604126112_gambling.mp3');
- 
+        const tickSound = new Audio('https://raw.githubusercontent.com/DmitryKey/csgo-case-opening/master/sounds/scroll.wav');
+        const winSound = new Audio('https://github.com/sourcesounds/csgo/blob/master/sound/ui/panorama/capsule_countdown_01.wav');
+        
         function unlockAudio() {
             tickSound.play().then(() => { tickSound.pause(); tickSound.currentTime = 0; });
             winSound.play().then(() => { winSound.pause(); winSound.currentTime = 0; });
