@@ -180,15 +180,34 @@
 
     function generateTrack(winner) {
         track.innerHTML = '';
-        for (let i = 0; i < 85; i++) {
-            // Если это индекс победы, ставим нашего победителя, иначе — рандом
-            const char = (i === winIndex) ? winner : characters[Math.floor(Math.random() * characters.length)];
+        
+        for (let i = 0; i < 90; i++) {
+            let char;
+            
+            if (i === winIndex) {
+                // Вшиваем реального победителя в нужный слот
+                char = winner;
+            } else {
+                // Для всех остальных слотов используем ГЕНЕРАЦИЮ ПО ШАНСАМ
+                // Вызываем нашу функцию getRandomChar(), чтобы лента была "честной"
+                char = getRandomChar();
+            }
+
             const div = document.createElement('div');
             div.className = 'item';
+            
+            // Добавляем свечение, если выпало что-то крутое (Эпик или Легенда)
+            let glowStyle = "";
+            if (char.weight <= 10) { 
+                glowStyle = `box-shadow: inset 0 0 20px ${char.color}; border: 1px solid ${char.color};`;
+            }
+
             div.innerHTML = `
-                <img src="${char.image}">
-                <div class="item-name">${char.name}</div>
-                <div class="item-rarity" style="background: ${char.color}"></div>
+                <div style="width: 100%; height: 100%; ${glowStyle} display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px;">
+                    <img src="${char.image}">
+                    <div class="item-name">${char.name}</div>
+                    <div class="item-rarity" style="background: ${char.color}"></div>
+                </div>
             `;
             track.appendChild(div);
         }
