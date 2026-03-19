@@ -6,10 +6,7 @@
     <title>Кейсы Кваземата</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root {
-            --case-width: 150px;
-        }
-
+        :root { --case-width: 150px; }
         body {
             font-family: 'Segoe UI', Roboto, sans-serif;
             background-color: #121212;
@@ -22,7 +19,6 @@
             margin: 0;
             overflow: hidden;
         }
-
         .roulette-wrapper {
             position: relative;
             width: 100%;
@@ -32,8 +28,8 @@
             background: #1a1a1a;
             border: 2px solid #333;
             overflow: hidden;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
         }
-
         .pointer {
             position: absolute;
             left: 50%;
@@ -42,19 +38,16 @@
             width: 4px;
             background: #ff4444;
             z-index: 10;
-            box-shadow: 0 0 10px rgba(255,68,68,0.5);
             transform: translateX(-50%);
+            box-shadow: 0 0 10px rgba(255,68,68,0.5);
         }
-
         .roulette-track {
             display: flex;
             position: absolute;
             left: 0;
             top: 25px;
-            transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1);
             will-change: transform;
         }
-
         .item {
             width: var(--case-width);
             height: 150px;
@@ -63,12 +56,20 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            border: 1px solid #222;
-            background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
             box-sizing: border-box;
-            padding: 10px;
+            padding: 5px;
         }
-
+        .item-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #222;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
         .item img {
             width: 80px;
             height: 80px;
@@ -76,24 +77,19 @@
             border-radius: 8px;
             margin-bottom: 5px;
         }
-
         .item-name {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
             text-align: center;
-            white-space: nowrap;
+            width: 90%;
             overflow: hidden;
-            text-overflow: ellipsis;
-            width: 100%;
         }
-
         .item-rarity {
-            width: 100%;
+            width: 80%;
             height: 4px;
             margin-top: 8px;
             border-radius: 2px;
         }
-
         #spin-btn {
             padding: 15px 50px;
             background: #2aabee;
@@ -103,24 +99,19 @@
             font-size: 18px;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 5px 15px rgba(42,171,238,0.3);
         }
-
-        #spin-btn:disabled { background: #444; cursor: not-allowed; }
-
+        #spin-btn:disabled { background: #444; }
         #win-overlay {
             display: none;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             z-index: 100;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            animation: fadeIn 0.3s;
+            text-align: center;
         }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -136,129 +127,118 @@
 
     <div id="win-overlay" onclick="this.style.display='none'">
         <h1 id="win-rarity-text">ВЫПАЛО!</h1>
-        <img id="win-img" src="" style="width: 200px; border-radius: 20px; border: 5px solid white;">
+        <img id="win-img" src="" style="width: 220px; border-radius: 20px; border: 5px solid white;">
         <h2 id="win-name">Название</h2>
-        <p>Нажми куда угодно, чтобы закрыть</p>
+        <p>Нажми, чтобы закрыть</p>
     </div>
 
-<script>
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
 
     const tickSound = new Audio('https://zvukipro.com/uploads/files/2020-10/1604126048_go-new-gambling.mp3');
     const winSound = new Audio('https://zvukipro.com/uploads/files/2020-10/1604126112_gambling.mp3');
-
-    const characters = [
-        { name: "Amour plastique", image: "https://i.ibb.co/s9cpgL5b/zxz.png", rarity: "Обычная", color: "#A0A0A0", weight: 41 },
-        { name: "Я НЕ", image: "https://i.ibb.co/6RzPJ2PK/Picsart-26-03-19-17-28-57-544.jpg", rarity: "Редкая", color: "#3498DB", weight: 26 },
-        { name: "КОРОЛЬ", image: "https://i.ibb.co/888888/king.png", rarity: "Сверхредкая", color: "#3442db", weight: 20 },
-        { name: "ПАРНУХА", image: "https://i.ibb.co/ZpSGBcvc/image.png", rarity: "Эпическая", color: "#9B59B6", weight: 10 },
-        { name: "СЕКРЕТНЫЙ КВАЗ", image: "https://placehold.co/400x400/gold/black?text=Легенда", rarity: "Легендарная", color: "#F1C40F", weight: 3 }
-    ];
-
-    const track = document.getElementById('track');
-    const btn = document.getElementById('spin-btn');
-    const caseWidth = 150;
-    const winIndex = 75;
-
-    function getRandomChar() {
-        let total = characters.reduce((s, c) => s + c.weight, 0);
-        let rnd = Math.random() * total;
-        let sum = 0;
-        for (let c of characters) {
-            sum += c.weight;
-            if (rnd <= sum) return c;
+ 
+        function unlockAudio() {
+            tickSound.play().then(() => { tickSound.pause(); tickSound.currentTime = 0; });
+            winSound.play().then(() => { winSound.pause(); winSound.currentTime = 0; });
+            document.removeEventListener('click', unlockAudio);
         }
-    }
+        document.addEventListener('click', unlockAudio);
 
-    function generateTrack(winner) {
-        track.innerHTML = '';
-        
-        for (let i = 0; i < 90; i++) {
-            let char;
-            
-            if (i === winIndex) {
-                char = winner;
-            } else {
-                char = getRandomChar();
+        const characters = [
+            { name: "Amour plastique", image: "https://i.ibb.co/s9cpgL5b/zxz.png", rarity: "Обычная", color: "#A0A0A0", weight: 41 },
+            { name: "Я НЕ", image: "https://i.ibb.co/6RzPJ2PK/Picsart-26-03-19-17-28-57-544.jpg", rarity: "Редкая", color: "#3498DB", weight: 26 },
+            { name: "КОРОЛЬ", image: "https://i.ibb.co/ZpSGBcvc/image.png", rarity: "Сверхредкая", color: "#3442db", weight: 20 },
+            { name: "ПАРНУХА", image: "https://i.ibb.co/ZpSGBcvc/image.png", rarity: "Эпическая", color: "#9B59B6", weight: 10 },
+            { name: "СЕКРЕТНЫЙ КВАЗ", image: "https://placehold.co/400x400/gold/black?text=Легенда", rarity: "Легендарная", color: "#F1C40F", weight: 3 }
+        ];
+
+        const track = document.getElementById('track');
+        const btn = document.getElementById('spin-btn');
+        const caseWidth = 150;
+        const winIndex = 75;
+
+        function getRandomChar() {
+            let total = characters.reduce((s, c) => s + c.weight, 0);
+            let rnd = Math.random() * total;
+            let sum = 0;
+            for (let c of characters) {
+                sum += c.weight;
+                if (rnd <= sum) return c;
             }
-
-            const div = document.createElement('div');
-            div.className = 'item';
-            
-            let glowStyle = "";
-            if (char.weight <= 10) { 
-                glowStyle = `box-shadow: inset 0 0 20px ${char.color}; border: 1px solid ${char.color};`;
-            }
-
-            div.innerHTML = `
-                <div style="width: 100%; height: 100%; ${glowStyle} display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px;">
-                    <img src="${char.image}">
-                    <div class="item-name">${char.name}</div>
-                    <div class="item-rarity" style="background: ${char.color}"></div>
-                </div>
-            `;
-            track.appendChild(div);
         }
-    }
 
-    let isSpinning = false;
+        function generateTrack(winner) {
+            track.innerHTML = '';
+            for (let i = 0; i < 90; i++) {
+                let char = (i === winIndex) ? winner : getRandomChar();
+                const div = document.createElement('div');
+                div.className = 'item';
+                let glow = char.weight <= 10 ? `box-shadow: inset 0 0 20px ${char.color}; border-color: ${char.color};` : "";
+                div.innerHTML = `
+                    <div class="item-content" style="${glow}">
+                        <img src="${char.image}">
+                        <div class="item-name">${char.name}</div>
+                        <div class="item-rarity" style="background: ${char.color}"></div>
+                    </div>
+                `;
+                track.appendChild(div);
+            }
+        }
 
-    btn.addEventListener('click', () => {
-        if (isSpinning) return;
-        
-        const winner = getRandomChar(); 
-        generateTrack(winner);
-        
-        isSpinning = true;
-        btn.disabled = true;
-        document.getElementById('status-text').innerText = "Открываем...";
+        let isSpinning = false;
 
-        track.style.transition = 'none';
-        track.style.transform = 'translateX(0px)';
-        
-        setTimeout(() => {
-            const containerWidth = document.querySelector('.roulette-wrapper').offsetWidth;
-            const center = containerWidth / 2;
-            const randomOffset = Math.floor(Math.random() * 60) - 30; 
-            const stopPos = (winIndex * caseWidth) + (caseWidth / 2) - center + randomOffset;
+        btn.addEventListener('click', () => {
+            if (isSpinning) return;
+            const winner = getRandomChar();
+            generateTrack(winner);
             
-            track.style.transition = 'transform 5s cubic-bezier(0.15, 0, 0.1, 1)';
-            track.style.transform = `translateX(-${stopPos}px)`;
+            isSpinning = true;
+            btn.disabled = true;
 
-            let lastTick = 0;
-            const checkTick = () => {
-                const currentPos = Math.abs(track.getBoundingClientRect().left);
-                const currentIndex = Math.floor((currentPos + center) / caseWidth);
-                if (currentIndex > lastTick) {
-                    lastTick = currentIndex;
-                    tickSound.currentTime = 0;
-                    tickSound.play().catch(()=>{});
-                    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-                }
-                if (isSpinning) requestAnimationFrame(checkTick);
-            };
-            checkTick();
-        }, 100);
-
-        setTimeout(() => {
-            isSpinning = false;
-            btn.disabled = false;
-            document.getElementById('status-text').innerText = "Кейс Кваземата";
+            track.style.transition = 'none';
+            track.style.transform = 'translateX(0px)';
             
-            document.getElementById('win-img').src = winner.image;
-            document.getElementById('win-name').innerText = winner.name;
-            document.getElementById('win-rarity-text').innerText = winner.rarity;
-            document.getElementById('win-rarity-text').style.color = winner.color;
-            document.getElementById('win-overlay').style.display = 'flex';
-            
-            winSound.play().catch(()=>{});
-            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-        }, 5200);
-    });
+            setTimeout(() => {
+                const center = document.querySelector('.roulette-wrapper').offsetWidth / 2;
+                const randomShift = Math.floor(Math.random() * 80) - 40;
+                const stopPos = (winIndex * caseWidth) + (caseWidth / 2) - center + randomShift;
+                
+                track.style.transition = 'transform 6s cubic-bezier(0.1, 0, 0.1, 1)';
+                track.style.transform = `translateX(-${stopPos}px)`;
 
-    generateTrack(characters[0]);
-</script>
+                let lastTick = 0;
+                const checkTick = () => {
+                    const currentPos = Math.abs(track.getBoundingClientRect().left);
+                    const currentIndex = Math.floor((currentPos + center) / caseWidth);
+                    if (currentIndex > lastTick) {
+                        lastTick = currentIndex;
+                        tickSound.currentTime = 0;
+                        tickSound.play().catch(()=>{});
+                        if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+                    }
+                    if (isSpinning) requestAnimationFrame(checkTick);
+                };
+                checkTick();
+            }, 100);
+
+            setTimeout(() => {
+                isSpinning = false;
+                btn.disabled = false;
+                document.getElementById('win-img').src = winner.image;
+                document.getElementById('win-img').style.borderColor = winner.color;
+                document.getElementById('win-name').innerText = winner.name;
+                document.getElementById('win-rarity-text').innerText = winner.rarity;
+                document.getElementById('win-rarity-text').style.color = winner.color;
+                document.getElementById('win-overlay').style.display = 'flex';
+                winSound.play().catch(()=>{});
+                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            }, 6200);
+        });
+
+        generateTrack(characters[0]);
+    </script>
 </body>
 </html>
