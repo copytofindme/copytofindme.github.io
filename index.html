@@ -214,14 +214,18 @@
                     const currentPos = Math.abs(track.getBoundingClientRect().left);
                     const currentIndex = Math.floor((currentPos + center) / caseWidth);
                    
-                    if (currentIndex > lastTick) {
+                   if (currentIndex > lastTick) {
     lastTick = currentIndex;
 
     const tickClone = tickSound.cloneNode(); 
-    tickClone.volume = 2;
-    tickClone.play().catch(() => {});
+    
+    tickClone.volume = 1.0; 
+    
+    tickClone.play().catch(e => console.log("Sound error:", e));
 
-    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+    if (window.Telegram && tg.HapticFeedback) {
+        tg.HapticFeedback.impactOccurred('medium');
+    }
 }
                     if (isSpinning) requestAnimationFrame(checkTick);
                 };
