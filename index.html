@@ -213,12 +213,16 @@
                 const checkTick = () => {
                     const currentPos = Math.abs(track.getBoundingClientRect().left);
                     const currentIndex = Math.floor((currentPos + center) / caseWidth);
+                   
                     if (currentIndex > lastTick) {
-                        lastTick = currentIndex;
-                        tickSound.currentTime = 0;
-                        tickSound.play().catch(()=>{});
-                        if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-                    }
+    lastTick = currentIndex;
+
+    const tickClone = tickSound.cloneNode(); 
+    tickClone.volume = 0.5;
+    tickClone.play().catch(() => {});
+
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+}
                     if (isSpinning) requestAnimationFrame(checkTick);
                 };
                 checkTick();
