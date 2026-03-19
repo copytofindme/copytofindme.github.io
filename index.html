@@ -137,8 +137,8 @@
         tg.ready();
         tg.expand();
 
-        const tickSound = new Audio('CSGO Case Opening Sound Effect.mp3');
-        const winSound = new Audio('https://github.com/sourcesounds/csgo/blob/master/sound/ui/panorama/capsule_countdown_01.wav');
+        const tickSound = new Audio('opencase_tick_sound.mp3');
+        const winSound = new Audio('opencase_win_sound.mp3');
         
         function unlockAudio() {
             tickSound.play().then(() => { tickSound.pause(); tickSound.currentTime = 0; });
