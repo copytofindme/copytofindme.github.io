@@ -138,9 +138,9 @@ tg.ready();
 tg.expand();
 
 // 1. СОЗДАЕМ ПУЛ ЗВУКОВ (25 штук хватит для любого "хруста")
-const tickPool = Array.from({ length: 25 }, () => new Audio('opencase_tick_sound.mp3'));
+const tickPool = Array.from({ length: 25 }, () => new Audio('opencase_tick_sound_volume+.mp3'));
 let tickIndex = 0;
-const winSound = new Audio('opencase_win_sound.mp3');
+const winSound = new Audio('opencase_win_sound_volume+.mp3');
 
 // Функция для запуска звука без прерывания предыдущих
 function playTick() {
