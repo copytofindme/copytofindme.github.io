@@ -34,7 +34,6 @@
             transition: transform 0.1s;
         }
 
-        /* Класс для анимации финального результата */
         .pop-in {
             animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
@@ -102,7 +101,6 @@
         tg.ready();
         tg.expand();
 
-        // База данных персонажей
         const characters = [
             { name: "Обычный работяга", image: "https://placehold.co/400x400/gray/white?text=Работяга", rarity: "Обычная", color: "#A0A0A0", weight: 60 },
             { name: "Четкий пацан", image: "https://placehold.co/400x400/blue/white?text=Пацан", rarity: "Редкая", color: "#3498DB", weight: 25 },
@@ -120,16 +118,14 @@
             }
         }
 
-        // Переменная, чтобы понимать, крутится ли сейчас рулетка
         let isSpinning = false;
 
         document.getElementById('spin-btn').addEventListener('click', () => {
-            // Если уже крутится - игнорируем нажатие
             if (isSpinning) return;
             
             isSpinning = true;
             const btn = document.getElementById('spin-btn');
-            btn.disabled = true; // Выключаем кнопку
+            btn.disabled = true; 
             btn.innerText = "Крутим...";
 
             document.getElementById('title').style.display = 'none';
@@ -137,16 +133,13 @@
             const img = document.getElementById('char-image');
             
             card.style.display = 'block';
-            img.classList.remove('pop-in'); // Убираем анимацию появления для начала
+            img.classList.remove('pop-in'); 
 
-            // Настройки анимации рулетки
             let spinCount = 0;
-            const maxSpins = 20; // Сколько раз сменятся картинки
-            const spinSpeed = 100; // Скорость смены в миллисекундах (0.1 секунды)
+            const maxSpins = 20; 
+            const spinSpeed = 100;
 
-            // Запускаем таймер мелькания
             const spinInterval = setInterval(() => {
-                // Берем абсолютно случайную картинку для эффекта мелькания (без учета шансов)
                 const randomVisual = characters[Math.floor(Math.random() * characters.length)];
                 
                 img.src = randomVisual.image;
@@ -154,18 +147,15 @@
                 document.getElementById('char-rarity').innerText = "Выбираем...";
                 document.getElementById('char-rarity').style.color = "var(--tg-theme-text-color, #ffffff)";
 
-                // Легкая вибрация "тиканья" при каждой смене картинки
                 if (tg.HapticFeedback) {
                     tg.HapticFeedback.impactOccurred('light');
                 }
 
                 spinCount++;
 
-                // Когда достигли максимума (прошло 2 секунды) - останавливаем
                 if (spinCount >= maxSpins) {
-                    clearInterval(spinInterval); // Тормозим мелькание
+                    clearInterval(spinInterval); 
                     
-                    // Выбираем ИТОГОВЫЙ результат уже с учетом шансов (весов)
                     const finalResult = getRandomCharacter();
                     
                     img.src = finalResult.image;
@@ -175,15 +165,12 @@
                     rarityElement.innerText = finalResult.rarity;
                     rarityElement.style.color = finalResult.color;
 
-                    // Добавляем красивую анимацию "прыжка" картинки
                     img.classList.add('pop-in');
 
-                    // Победная вибрация
                     if (tg.HapticFeedback) {
                         tg.HapticFeedback.notificationOccurred('success');
                     }
 
-                    // Возвращаем кнопку к жизни
                     isSpinning = false;
                     btn.disabled = false;
                     btn.innerText = "Крутить еще раз!";
