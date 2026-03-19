@@ -147,129 +147,115 @@
         <p>Нажми куда угодно, чтобы закрыть</p>
     </div>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
 
-        // Звуки (Найди прямые ссылки на mp3 или оставь пустыми)
-        const tickSound = new Audio('https://www.soundjay.com/buttons/button-50.mp3'); // Звук тика
-        const winSound = new Audio('https://www.soundjay.com/buttons/button-10.mp3');   // Звук выигрыша
+    const tickSound = new Audio('https://www.soundjay.com/buttons/button-50.mp3');
+    const winSound = new Audio('https://www.soundjay.com/buttons/button-10.mp3');
 
-        const characters = [
-            { name: "Amour plastique", image: "https://i.ibb.co/s9cpgL5b/zxz.png", rarity: "Обычная", color: "#A0A0A0", weight: 40 },
-            { name: "Я НЕ", image: "https://i.ibb.co/6RzPJ2PK/Picsart-26-03-19-17-28-57-544.jpg", rarity: "Редкая", color: "#3498DB", weight: 25 },
-            { name: "КОРОЛЬ", image: "https://placehold.co/400x400/3442db/white?text=КОРОЛЬ", rarity: "Сверхредкая", color: "#3442db", weight: 20 },
-            { name: "ПАРНУХА", image: "https://i.ibb.co/ZpSGBcvc/image.png", rarity: "Эпическая", color: "#9B59B6", weight: 10 },
-            { name: "СЕКРЕТНЫЙ КВАЗ", image: "https://placehold.co/400x400/gold/black?text=Легенда", rarity: "Легендарная", color: "#F1C40F", weight: 5 }
-        ];
+    const characters = [
+        { name: "Amour plastique", image: "https://i.ibb.co/s9cpgL5b/zxz.png", rarity: "Обычная", color: "#A0A0A0", weight: 40 },
+        { name: "Я НЕ", image: "https://i.ibb.co/6RzPJ2PK/Picsart-26-03-19-17-28-57-544.jpg", rarity: "Редкая", color: "#3498DB", weight: 25 },
+        { name: "КОРОЛЬ", image: "https://i.ibb.co/888888/king.png", rarity: "Сверхредкая", color: "#3442db", weight: 20 },
+        { name: "ПАРНУХА", image: "https://i.ibb.co/ZpSGBcvc/image.png", rarity: "Эпическая", color: "#9B59B6", weight: 10 },
+        { name: "СЕКРЕТНЫЙ КВАЗ", image: "https://placehold.co/400x400/gold/black?text=Легенда", rarity: "Легендарная", color: "#F1C40F", weight: 5 }
+    ];
 
-        const track = document.getElementById('track');
-        const btn = document.getElementById('spin-btn');
-        const caseWidth = 150;
+    const track = document.getElementById('track');
+    const btn = document.getElementById('spin-btn');
+    const caseWidth = 150; // Ширина одного кейса в CSS
+    const winIndex = 75;   // На какой по счету карточке остановимся
 
-        function getRandomChar() {
-            let total = characters.reduce((s, c) => s + c.weight, 0);
-            let rnd = Math.random() * total;
-            let sum = 0;
-            for (let c of characters) {
-                sum += c.weight;
-                if (rnd <= sum) return c;
-            }
+    function getRandomChar() {
+        let total = characters.reduce((s, c) => s + c.weight, 0);
+        let rnd = Math.random() * total;
+        let sum = 0;
+        for (let c of characters) {
+            sum += c.weight;
+            if (rnd <= sum) return c;
         }
+    }
 
-        function initTrack() {
-            track.innerHTML = '';
-            // Создаем 80 предметов для ленты
-            for (let i = 0; i < 80; i++) {
-                const char = i === 75 ? null : characters[Math.floor(Math.random() * characters.length)];
-                addCardToTrack(char);
-            }
-        }
-
-        function addCardToTrack(char, index) {
+    function generateTrack(winner) {
+        track.innerHTML = '';
+        for (let i = 0; i < 85; i++) {
+            // Если это индекс победы, ставим нашего победителя, иначе — рандом
+            const char = (i === winIndex) ? winner : characters[Math.floor(Math.random() * characters.length)];
             const div = document.createElement('div');
             div.className = 'item';
-            if (char) {
-                div.innerHTML = `
-                    <img src="${char.image}">
-                    <div class="item-name">${char.name}</div>
-                    <div class="item-rarity" style="background: ${char.color}"></div>
-                `;
-            }
+            div.innerHTML = `
+                <img src="${char.image}">
+                <div class="item-name">${char.name}</div>
+                <div class="item-rarity" style="background: ${char.color}"></div>
+            `;
             track.appendChild(div);
         }
+    }
 
-        let isSpinning = false;
+    let isSpinning = false;
 
-        btn.addEventListener('click', () => {
-            if (isSpinning) return;
-            isSpinning = true;
-            btn.disabled = true;
+    btn.addEventListener('click', () => {
+        if (isSpinning) return;
+        
+        const winner = getRandomChar(); // 1. Выбираем победителя сразу
+        generateTrack(winner);         // 2. Строим ленту, где этот победитель на 75-м месте
+        
+        isSpinning = true;
+        btn.disabled = true;
+        document.getElementById('status-text').innerText = "Открываем...";
 
-            // Генерируем ленту заново для чистоты
-            initTrack();
+        // Сброс позиции ленты
+        track.style.transition = 'none';
+        track.style.transform = 'translateX(0px)';
+        
+        setTimeout(() => {
+            // 3. Рассчитываем точную остановку
+            const containerWidth = document.querySelector('.roulette-wrapper').offsetWidth;
+            const center = containerWidth / 2;
+            // Добавляем небольшой рандомный сдвиг внутри карточки, чтобы не всегда ровно по центру стрелки
+            const randomOffset = Math.floor(Math.random() * 60) - 30; 
+            const stopPos = (winIndex * caseWidth) + (caseWidth / 2) - center + randomOffset;
             
-            // Выбираем победителя заранее
-            const winner = getRandomChar();
+            track.style.transition = 'transform 5s cubic-bezier(0.15, 0, 0.1, 1)';
+            track.style.transform = `translateX(-${stopPos}px)`;
+
+            // Звук тиканья при проезде каждой карточки
+            let lastTick = 0;
+            const checkTick = () => {
+                const currentPos = Math.abs(track.getBoundingClientRect().left);
+                const currentIndex = Math.floor((currentPos + center) / caseWidth);
+                if (currentIndex > lastTick) {
+                    lastTick = currentIndex;
+                    tickSound.currentTime = 0;
+                    tickSound.play().catch(()=>{});
+                    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+                }
+                if (isSpinning) requestAnimationFrame(checkTick);
+            };
+            checkTick();
+        }, 100);
+
+        setTimeout(() => {
+            isSpinning = false;
+            btn.disabled = false;
+            document.getElementById('status-text').innerText = "Кейс Кваземата";
             
-            // Заменяем 75-й элемент на нашего победителя (именно на нем остановится рулетка)
-            const cards = document.querySelectorAll('.item');
-            const winningCard = cards[75];
-            winningCard.innerHTML = `
-                <img src="${winner.image}">
-                <div class="item-name">${winner.name}</div>
-                <div class="item-rarity" style="background: ${winner.color}"></div>
-            `;
-
-            // Сброс позиции
-            track.style.transition = 'none';
-            track.style.transform = 'translateX(0px)';
+            // Показываем финал
+            document.getElementById('win-img').src = winner.image;
+            document.getElementById('win-name').innerText = winner.name;
+            document.getElementById('win-rarity-text').innerText = winner.rarity;
+            document.getElementById('win-rarity-text').style.color = winner.color;
+            document.getElementById('win-overlay').style.display = 'flex';
             
-            // Рассчитываем точку остановки (центр 75-го кейса)
-            setTimeout(() => {
-                const centerOffset = document.body.clientWidth / 2;
-                const targetPos = (75 * caseWidth) + (caseWidth / 2) - centerOffset;
-                
-                track.style.transition = 'transform 5s cubic-bezier(0.1, 0, 0.1, 1)';
-                track.style.transform = `translateX(-${targetPos}px)`;
+            winSound.play().catch(()=>{});
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        }, 5200);
+    });
 
-                // Звук тиканья (имитация)
-                let lastTick = 0;
-                const checkTick = () => {
-                    const currentPos = Math.abs(track.getBoundingClientRect().left);
-                    const currentCardIndex = Math.floor(currentPos / caseWidth);
-                    if (currentCardIndex > lastTick) {
-                        lastTick = currentCardIndex;
-                        tickSound.currentTime = 0;
-                        tickSound.play().catch(()=>{});
-                        if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-                    }
-                    if (isSpinning) requestAnimationFrame(checkTick);
-                };
-                checkTick();
-            }, 50);
-
-            // Финал через 5 секунд
-            setTimeout(() => {
-                isSpinning = false;
-                btn.disabled = false;
-                
-                // Показываем окно победы
-                document.getElementById('win-img').src = winner.image;
-                document.getElementById('win-img').style.borderColor = winner.color;
-                document.getElementById('win-name').innerText = winner.name;
-                document.getElementById('win-rarity-text').innerText = winner.rarity;
-                document.getElementById('win-rarity-text').style.color = winner.color;
-                document.getElementById('win-overlay').style.display = 'flex';
-                
-                winSound.play().catch(()=>{});
-                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-            }, 5500);
-        });
-
-        // Первая инициализация
-        initTrack();
-    </script>
+    // Начальная пустая лента
+    generateTrack(characters[0]);
+</script>
 </body>
 </html>
