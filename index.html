@@ -137,20 +137,17 @@
 tg.ready();
 tg.expand();
 
-// 1. СОЗДАЕМ ПУЛ ЗВУКОВ (25 штук хватит для любого "хруста")
 const tickPool = Array.from({ length: 25 }, () => new Audio('opencase_tick_sound_volume+.mp3'));
 let tickIndex = 0;
 const winSound = new Audio('opencase_win_sound_volume+.mp3');
 
-// Функция для запуска звука без прерывания предыдущих
 function playTick() {
     const sound = tickPool[tickIndex];
-    sound.currentTime = 0; // Сбрасываем конкретно ЭТОТ объект (он всё равно уже молчит)
+    sound.currentTime = 0;
     sound.play().catch(() => {});
-    tickIndex = (tickIndex + 1) % tickPool.length; // Берем следующий объект для следующей карточки
+    tickIndex = (tickIndex + 1) % tickPool.length;
 }
 
-// Разблокировка звука для мобильных устройств
 function unlockAudio() {
     tickPool.forEach(s => {
         s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(()=>{});
@@ -163,7 +160,7 @@ document.addEventListener('click', unlockAudio);
 const characters = [
     { name: "Amour plastique", image: "https://i.ibb.co/s9cpgL5b/zxz.png", rarity: "Обычная", color: "#A0A0A0", weight: 35 },
     { name: "Я НЕ ПЕРДЕЛ", image: "https://i.ibb.co/6RzPJ2PK/Picsart-26-03-19-17-28-57-544.jpg", rarity: "Редкая", color: "#3498DB", weight: 25 },
-    { name: "КОРОЛЬ", image: "https://i.ibb.co/ZpSGBcvc/image.png", rarity: "Сверхредкая", color: "#3442db", weight: 20 },
+    { name: "еврейское логово", image: "https://i.ibb.co/S49Wdtph/600-600.png", rarity: "Сверхредкая", color: "#3442db", weight: 20 },
     { name: "ПАРНУХА", image: "https://i.ibb.co/ZpSGBcvc/image.png", rarity: "Эпическая", color: "#9B59B6", weight: 10 },
     { name: "TURKISH KILLER", image: "https://i.ibb.co/Y7NcF17G/TURKISH-KILLER.png", rarity: "Мифическая", color: "#d61e1e", weight: 7 },
     { name: "СЕКРЕТНЫЙ КВАЗ", image: "https://placehold.co/400x400/gold/black?text=Легенда", rarity: "Легендарная", color: "#F1C40F", weight: 3 }
@@ -230,7 +227,7 @@ btn.addEventListener('click', () => {
             
             if (currentIndex > lastTick) {
                 lastTick = currentIndex;
-                playTick(); // ВЫЗОВ ИЗ ПУЛА
+                playTick();
                 if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
             }
             if (isSpinning) requestAnimationFrame(checkTick);
