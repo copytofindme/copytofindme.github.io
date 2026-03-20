@@ -150,7 +150,7 @@
         const tickPool = Array.from({ length: 25 }, () => new Audio('opencase_tick_sound_volume+.mp3'));
         let tickIndex = 0;
         const winSound = new Audio('opencase_win_sound_volume+.mp3');
-        const secretPassSound = new Audio('secret_pass.mp3'); // <-- Тот самый звук пролета секрета
+        const secretPassSound = new Audio('secret (do not open)/re-zero-return-by-death.mp3');
 
         function playTick() {
             const sound = tickPool[tickIndex];
@@ -159,7 +159,6 @@
             tickIndex = (tickIndex + 1) % tickPool.length;
         }
 
-        // Разблокировка медиа для мобилок
         function unlockAudio() {
             tickPool.forEach(s => {
                 s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(()=>{});
@@ -167,7 +166,6 @@
             winSound.play().then(() => { winSound.pause(); winSound.currentTime = 0; }).catch(()=>{});
             secretPassSound.play().then(() => { secretPassSound.pause(); secretPassSound.currentTime = 0; }).catch(()=>{});
             
-            // Также разблокируем видео (чтобы играло со звуком)
             const vid = document.getElementById('win-video');
             vid.play().then(() => { vid.pause(); vid.currentTime = 0; }).catch(()=>{});
             
@@ -175,13 +173,11 @@
         }
         document.addEventListener('click', unlockAudio);
 
-        // Функция закрытия окна, чтобы видео выключалось при клике
         function closeOverlay() {
             document.getElementById('win-overlay').style.display = 'none';
             document.getElementById('win-video').pause();
         }
-
-        // --- ПЕРСОНАЖИ ---
+        
         const characters = [
             { name: "Amour plastique", image: "https://i.ibb.co/s9cpgL5b/zxz.png", rarity: "Обычная", color: "#A0A0A0", weight: 35 },
             { name: "Я НЕ ПЕРДЕЛ", image: "https://i.ibb.co/6RzPJ2PK/Picsart-26-03-19-17-28-57-544.jpg", rarity: "Редкая", color: "#3498DB", weight: 25 },
@@ -189,14 +185,13 @@
             { name: "ПАРНУХА", image: "https://i.ibb.co/ZpSGBcvc/image.png", rarity: "Эпическая", color: "#9B59B6", weight: 10 },
             { name: "TURKISH KILLER", image: "https://i.ibb.co/Y7NcF17G/TURKISH-KILLER.png", rarity: "Мифическая", color: "#d61e1e", weight: 7 },
             { name: "Иисус", image: "https://i.ibb.co/jdXbbr7/image.png", rarity: "Легендарная", color: "#F1C40F", weight: 3 },
-            // ВАЖНО: Добавили Секретного Кваземата! Шанс 0.1 (крайне мал). Замени ссылки на свои!
             { 
                 name: "СЕКРЕТНЫЙ КВАЗЕМАТ", 
                 image: "https://placehold.co/400x400/000/fff?text=?", // Картинка для рулетки
                 video: "secret_win_video.mp4", // Видео, которое включится при победе
                 rarity: "СЕКРЕТНОЕ", 
-                color: "#ff0000", 
-                weight: 0.1, 
+                color: "#292100", 
+                weight: 0.4, 
                 isSecret: true 
             }
         ];
