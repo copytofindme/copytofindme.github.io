@@ -147,10 +147,12 @@
         tg.ready();
         tg.expand();
 
+        // --- ЗВУКИ ---
         const tickPool = Array.from({ length: 25 }, () => new Audio('opencase_tick_sound_volume+.mp3'));
         let tickIndex = 0;
         const winSound = new Audio('opencase_win_sound_volume+.mp3');
-        const secretPassSound = new Audio('secret (do not open)/re-zero-return-by-death.mp3');
+        // Путь к секретному звуку
+        const secretSoundPath = 'secret (do not open)/re-zero-return-by-death.mp3';
 
         function playTick() {
             const sound = tickPool[tickIndex];
@@ -159,23 +161,31 @@
             tickIndex = (tickIndex + 1) % tickPool.length;
         }
 
+        // Разблокировка для мобильных устройств
         function unlockAudio() {
             tickPool.forEach(s => {
                 s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(()=>{});
             });
             winSound.play().then(() => { winSound.pause(); winSound.currentTime = 0; }).catch(()=>{});
-            secretPassSound.play().then(() => { secretPassSound.pause(); secretPassSound.currentTime = 0; }).catch(()=>{});
             
+            // Прогружаем секретный звук
+            const sInit = new Audio(secretSoundPath);
+            sInit.play().then(() => { sInit.pause(); sInit.currentTime = 0; }).catch(()=>{});
+
             const vid = document.getElementById('win-video');
             vid.play().then(() => { vid.pause(); vid.currentTime = 0; }).catch(()=>{});
             
             document.removeEventListener('click', unlockAudio);
+            document.removeEventListener('touchstart', unlockAudio);
         }
         document.addEventListener('click', unlockAudio);
+        document.addEventListener('touchstart', unlockAudio);
 
         function closeOverlay() {
             document.getElementById('win-overlay').style.display = 'none';
-            document.getElementById('win-video').pause();
+            const vid = document.getElementById('win-video');
+            vid.pause();
+            vid.currentTime = 0;
         }
         
         const characters = [
@@ -218,11 +228,14 @@
                 const div = document.createElement('div');
                 div.className = 'item';
                 let glow = char.weight <= 10 || char.isSecret ? `box-shadow: inset 0 0 20px ${char.color}; border-color: ${char.color};` : "";
+                
+                // Добавляем невидимую метку для поиска секретки
                 div.innerHTML = `
                     <div class="item-content" style="${glow}">
                         <img src="${char.image}">
                         <div class="item-name">${char.name}</div>
-                        <div class="item-rarity" style="background: ${char.color}">${char.rarity === 'СЕКРЕТНОЕ' ? 'СЕКРЕТНОЕ' : ''}</div>
+                        <span style="display:none">${char.isSecret ? 'IS_SECRET' : ''}</span>
+                        <div class="item-rarity" style="background: ${char.color}"></div>
                     </div>
                 `;
                 track.appendChild(div);
@@ -252,6 +265,7 @@
 
                 let lastTick = 0;
                 const checkTick = () => {
+                    if (!isSpinning) return;
                     const currentPos = Math.abs(track.getBoundingClientRect().left);
                     const currentIndex = Math.floor((currentPos + center) / caseWidth);
                     
@@ -259,16 +273,18 @@
                         lastTick = currentIndex;
                         
                         const passingItem = track.children[currentIndex];
-                        if (passingItem && passingItem.innerText.includes("СЕКРЕТНОЕ")) {
-                            secretPassSound.currentTime = 0;
-                            secretPassSound.play().catch(()=>{});
+                        // Проверяем нашу скрытую метку IS_SECRET
+                        if (passingItem && passingItem.innerHTML.includes("IS_SECRET")) {
+                            // Создаем новую аудио-копию, чтобы звуки накладывались красиво
+                            const s = new Audio(secretSoundPath);
+                            s.play().catch(()=>{});
                             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
                         } else {
                             playTick();
                             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
                         }
                     }
-                    if (isSpinning) requestAnimationFrame(checkTick);
+                    requestAnimationFrame(checkTick);
                 };
                 checkTick();
             }, 100);
