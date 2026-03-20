@@ -136,7 +136,7 @@
         <h1 id="win-rarity-text">ВЫПАЛО!</h1>
         <img id="win-img" src="" style="width: 220px; border-radius: 20px; border: 5px solid white;">
         
-        <video id="win-video" playsinline loop></video>
+        <video id="win-video" playsinline loop muted preload="auto"></video>
         
         <h2 id="win-name">Название</h2>
         <p>Нажми, чтобы закрыть</p>
@@ -147,7 +147,6 @@
         tg.ready();
         tg.expand();
 
-        // --- ЗВУКИ ---
         const tickPool = Array.from({ length: 25 }, () => new Audio('opencase_tick_sound_volume+.mp3'));
         let tickIndex = 0;
         const winSound = new Audio('opencase_win_sound_volume+.mp3');
@@ -182,7 +181,6 @@
             document.getElementById('win-overlay').style.display = 'none';
             const vid = document.getElementById('win-video');
             vid.pause();
-            vid.currentTime = 0;
         }
         
         const characters = [
@@ -193,12 +191,12 @@
             { name: "TURKISH KILLER", image: "https://i.ibb.co/Y7NcF17G/TURKISH-KILLER.png", rarity: "Мифическая", color: "#d61e1e", weight: 7 },
             { name: "Иисус", image: "https://i.ibb.co/jdXbbr7/image.png", rarity: "Легендарная", color: "#F1C40F", weight: 3 },
             { 
-                name: "Ахнежка", 
+                name: "АХнежка", 
                 image: "https://i.ibb.co/ZR6ZQrtQ/secret.png",
                 video: "secret (do not open)/secret.mp4",
-                rarity: "ЧОЗАХН", 
+                rarity: "INCREDIBLE GAZZY", 
                 color: "#008a19", 
-                weight: 100, 
+                weight: 1000, 
                 isSecret: true 
             }
         ];
@@ -225,7 +223,6 @@
                 const div = document.createElement('div');
                 div.className = 'item';
                 let glow = char.weight <= 10 || char.isSecret ? `box-shadow: inset 0 0 20px ${char.color}; border-color: ${char.color};` : "";
-                
                 div.innerHTML = `
                     <div class="item-content" style="${glow}">
                         <img src="${char.image}">
@@ -244,10 +241,8 @@
             if (isSpinning) return;
             const winner = getRandomChar();
             generateTrack(winner);
-            
             isSpinning = true;
             btn.disabled = true;
-
             track.style.transition = 'none';
             track.style.transform = 'translateX(0px)';
             
@@ -255,7 +250,6 @@
                 const center = document.querySelector('.roulette-wrapper').offsetWidth / 2;
                 const randomShift = Math.floor(Math.random() * 80) - 40;
                 const stopPos = (winIndex * caseWidth) + (caseWidth / 2) - center + randomShift;
-                
                 track.style.transition = 'transform 6s cubic-bezier(0.1, 0, 0.1, 1)';
                 track.style.transform = `translateX(-${stopPos}px)`;
 
@@ -264,10 +258,8 @@
                     if (!isSpinning) return;
                     const currentPos = Math.abs(track.getBoundingClientRect().left);
                     const currentIndex = Math.floor((currentPos + center) / caseWidth);
-                    
                     if (currentIndex > lastTick) {
                         lastTick = currentIndex;
-                        
                         const passingItem = track.children[currentIndex];
                         if (passingItem && passingItem.innerHTML.includes("IS_SECRET")) {
                             const s = new Audio(secretSoundPath);
@@ -294,10 +286,21 @@
                 if (winner.isSecret) {
                     winImg.style.display = 'none';
                     winVid.style.display = 'block';
+                    
+                    // Усиленная логика запуска видео
                     winVid.src = winner.video;
+                    winVid.load(); // Важно! Перезагружаем видео под новый источник
                     winVid.style.borderColor = winner.color;
-                    winVid.currentTime = 0;
-                    winVid.play().catch(()=>{}); 
+                    
+                    // Пытаемся запустить и сразу включить звук
+                    winVid.play().then(() => {
+                        winVid.muted = false; // Если запустилось, включаем звук обратно
+                    }).catch(e => {
+                        console.error("Ошибка видео:", e);
+                        // Если всё равно не идет, пробуем оставить muted
+                        winVid.muted = true;
+                        winVid.play();
+                    }); 
                     winSound.pause();
                 } else {
                     winImg.style.display = 'block';
