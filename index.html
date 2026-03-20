@@ -136,7 +136,7 @@
         <h1 id="win-rarity-text">ВЫПАЛО!</h1>
         <img id="win-img" src="" style="width: 220px; border-radius: 20px; border: 5px solid white;">
         
-        <video id="win-video" playsinline></video>
+        <video id="win-video" playsinline loop></video>
         
         <h2 id="win-name">Название</h2>
         <p>Нажми, чтобы закрыть</p>
@@ -151,7 +151,6 @@
         const tickPool = Array.from({ length: 25 }, () => new Audio('opencase_tick_sound_volume+.mp3'));
         let tickIndex = 0;
         const winSound = new Audio('opencase_win_sound_volume+.mp3');
-        // Путь к секретному звуку
         const secretSoundPath = 'secret (do not open)/re-zero-return-by-death.mp3';
 
         function playTick() {
@@ -161,14 +160,12 @@
             tickIndex = (tickIndex + 1) % tickPool.length;
         }
 
-        // Разблокировка для мобильных устройств
         function unlockAudio() {
             tickPool.forEach(s => {
                 s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(()=>{});
             });
             winSound.play().then(() => { winSound.pause(); winSound.currentTime = 0; }).catch(()=>{});
             
-            // Прогружаем секретный звук
             const sInit = new Audio(secretSoundPath);
             sInit.play().then(() => { sInit.pause(); sInit.currentTime = 0; }).catch(()=>{});
 
@@ -229,7 +226,6 @@
                 div.className = 'item';
                 let glow = char.weight <= 10 || char.isSecret ? `box-shadow: inset 0 0 20px ${char.color}; border-color: ${char.color};` : "";
                 
-                // Добавляем невидимую метку для поиска секретки
                 div.innerHTML = `
                     <div class="item-content" style="${glow}">
                         <img src="${char.image}">
@@ -273,9 +269,7 @@
                         lastTick = currentIndex;
                         
                         const passingItem = track.children[currentIndex];
-                        // Проверяем нашу скрытую метку IS_SECRET
                         if (passingItem && passingItem.innerHTML.includes("IS_SECRET")) {
-                            // Создаем новую аудио-копию, чтобы звуки накладывались красиво
                             const s = new Audio(secretSoundPath);
                             s.play().catch(()=>{});
                             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
