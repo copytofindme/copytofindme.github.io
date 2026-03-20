@@ -112,6 +112,13 @@
             justify-content: center;
             text-align: center;
         }
+        #win-video {
+            display: none;
+            width: 220px;
+            border-radius: 20px;
+            border: 5px solid white;
+            background: #000;
+        }
     </style>
 </head>
 <body>
@@ -125,131 +132,192 @@
 
     <button id="spin-btn">ОТКРЫТЬ КЕЙС</button>
 
-    <div id="win-overlay" onclick="this.style.display='none'">
+    <div id="win-overlay" onclick="closeOverlay()">
         <h1 id="win-rarity-text">ВЫПАЛО!</h1>
         <img id="win-img" src="" style="width: 220px; border-radius: 20px; border: 5px solid white;">
+        
+        <video id="win-video" playsinline></video>
+        
         <h2 id="win-name">Название</h2>
         <p>Нажми, чтобы закрыть</p>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-tg.ready();
-tg.expand();
+        tg.ready();
+        tg.expand();
 
-const tickPool = Array.from({ length: 25 }, () => new Audio('opencase_tick_sound_volume+.mp3'));
-let tickIndex = 0;
-const winSound = new Audio('opencase_win_sound_volume+.mp3');
+        const tickPool = Array.from({ length: 25 }, () => new Audio('opencase_tick_sound_volume+.mp3'));
+        let tickIndex = 0;
+        const winSound = new Audio('opencase_win_sound_volume+.mp3');
+        const secretPassSound = new Audio('secret_pass.mp3'); // <-- Тот самый звук пролета секрета
 
-function playTick() {
-    const sound = tickPool[tickIndex];
-    sound.currentTime = 0;
-    sound.play().catch(() => {});
-    tickIndex = (tickIndex + 1) % tickPool.length;
-}
+        function playTick() {
+            const sound = tickPool[tickIndex];
+            sound.currentTime = 0;
+            sound.play().catch(() => {});
+            tickIndex = (tickIndex + 1) % tickPool.length;
+        }
 
-function unlockAudio() {
-    tickPool.forEach(s => {
-        s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(()=>{});
-    });
-    winSound.play().then(() => { winSound.pause(); winSound.currentTime = 0; }).catch(()=>{});
-    document.removeEventListener('click', unlockAudio);
-}
-document.addEventListener('click', unlockAudio);
-
-const characters = [
-    { name: "Amour plastique", image: "https://i.ibb.co/s9cpgL5b/zxz.png", rarity: "Обычная", color: "#A0A0A0", weight: 35 },
-    { name: "Я НЕ ПЕРДЕЛ", image: "https://i.ibb.co/6RzPJ2PK/Picsart-26-03-19-17-28-57-544.jpg", rarity: "Редкая", color: "#3498DB", weight: 25 },
-    { name: "Еврейское логово", image: "https://i.ibb.co/S49Wdtph/600-600.png", rarity: "Сверхредкая", color: "#3442db", weight: 20 },
-    { name: "ПАРНУХА", image: "https://i.ibb.co/ZpSGBcvc/image.png", rarity: "Эпическая", color: "#9B59B6", weight: 10 },
-    { name: "TURKISH KILLER", image: "https://i.ibb.co/Y7NcF17G/TURKISH-KILLER.png", rarity: "Мифическая", color: "#d61e1e", weight: 7 },
-    { name: "Иисус", image: "https://i.ibb.co/jdXbbr7/image.png", rarity: "Легендарная", color: "#F1C40F", weight: 3 }
-];
-
-const track = document.getElementById('track');
-const btn = document.getElementById('spin-btn');
-const caseWidth = 150;
-const winIndex = 75;
-
-function getRandomChar() {
-    let total = characters.reduce((s, c) => s + c.weight, 0);
-    let rnd = Math.random() * total;
-    let sum = 0;
-    for (let c of characters) {
-        sum += c.weight;
-        if (rnd <= sum) return c;
-    }
-}
-
-function generateTrack(winner) {
-    track.innerHTML = '';
-    for (let i = 0; i < 90; i++) {
-        let char = (i === winIndex) ? winner : getRandomChar();
-        const div = document.createElement('div');
-        div.className = 'item';
-        let glow = char.weight <= 10 ? `box-shadow: inset 0 0 20px ${char.color}; border-color: ${char.color};` : "";
-        div.innerHTML = `
-            <div class="item-content" style="${glow}">
-                <img src="${char.image}">
-                <div class="item-name">${char.name}</div>
-                <div class="item-rarity" style="background: ${char.color}"></div>
-            </div>
-        `;
-        track.appendChild(div);
-    }
-}
-
-let isSpinning = false;
-
-btn.addEventListener('click', () => {
-    if (isSpinning) return;
-    const winner = getRandomChar();
-    generateTrack(winner);
-    
-    isSpinning = true;
-    btn.disabled = true;
-
-    track.style.transition = 'none';
-    track.style.transform = 'translateX(0px)';
-    
-    setTimeout(() => {
-        const center = document.querySelector('.roulette-wrapper').offsetWidth / 2;
-        const randomShift = Math.floor(Math.random() * 80) - 40;
-        const stopPos = (winIndex * caseWidth) + (caseWidth / 2) - center + randomShift;
-        
-        track.style.transition = 'transform 6s cubic-bezier(0.1, 0, 0.1, 1)';
-        track.style.transform = `translateX(-${stopPos}px)`;
-
-        let lastTick = 0;
-        const checkTick = () => {
-            const currentPos = Math.abs(track.getBoundingClientRect().left);
-            const currentIndex = Math.floor((currentPos + center) / caseWidth);
+        // Разблокировка медиа для мобилок
+        function unlockAudio() {
+            tickPool.forEach(s => {
+                s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(()=>{});
+            });
+            winSound.play().then(() => { winSound.pause(); winSound.currentTime = 0; }).catch(()=>{});
+            secretPassSound.play().then(() => { secretPassSound.pause(); secretPassSound.currentTime = 0; }).catch(()=>{});
             
-            if (currentIndex > lastTick) {
-                lastTick = currentIndex;
-                playTick();
-                if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+            // Также разблокируем видео (чтобы играло со звуком)
+            const vid = document.getElementById('win-video');
+            vid.play().then(() => { vid.pause(); vid.currentTime = 0; }).catch(()=>{});
+            
+            document.removeEventListener('click', unlockAudio);
+        }
+        document.addEventListener('click', unlockAudio);
+
+        // Функция закрытия окна, чтобы видео выключалось при клике
+        function closeOverlay() {
+            document.getElementById('win-overlay').style.display = 'none';
+            document.getElementById('win-video').pause();
+        }
+
+        // --- ПЕРСОНАЖИ ---
+        const characters = [
+            { name: "Amour plastique", image: "https://i.ibb.co/s9cpgL5b/zxz.png", rarity: "Обычная", color: "#A0A0A0", weight: 35 },
+            { name: "Я НЕ ПЕРДЕЛ", image: "https://i.ibb.co/6RzPJ2PK/Picsart-26-03-19-17-28-57-544.jpg", rarity: "Редкая", color: "#3498DB", weight: 25 },
+            { name: "Еврейское логово", image: "https://i.ibb.co/S49Wdtph/600-600.png", rarity: "Сверхредкая", color: "#3442db", weight: 20 },
+            { name: "ПАРНУХА", image: "https://i.ibb.co/ZpSGBcvc/image.png", rarity: "Эпическая", color: "#9B59B6", weight: 10 },
+            { name: "TURKISH KILLER", image: "https://i.ibb.co/Y7NcF17G/TURKISH-KILLER.png", rarity: "Мифическая", color: "#d61e1e", weight: 7 },
+            { name: "Иисус", image: "https://i.ibb.co/jdXbbr7/image.png", rarity: "Легендарная", color: "#F1C40F", weight: 3 },
+            // ВАЖНО: Добавили Секретного Кваземата! Шанс 0.1 (крайне мал). Замени ссылки на свои!
+            { 
+                name: "СЕКРЕТНЫЙ КВАЗЕМАТ", 
+                image: "https://placehold.co/400x400/000/fff?text=?", // Картинка для рулетки
+                video: "secret_win_video.mp4", // Видео, которое включится при победе
+                rarity: "СЕКРЕТНОЕ", 
+                color: "#ff0000", 
+                weight: 0.1, 
+                isSecret: true 
             }
-            if (isSpinning) requestAnimationFrame(checkTick);
-        };
-        checkTick();
-    }, 100);
+        ];
 
-    setTimeout(() => {
-        isSpinning = false;
-        btn.disabled = false;
-        document.getElementById('win-img').src = winner.image;
-        document.getElementById('win-img').style.borderColor = winner.color;
-        document.getElementById('win-name').innerText = winner.name;
-        document.getElementById('win-rarity-text').innerText = winner.rarity;
-        document.getElementById('win-rarity-text').style.color = winner.color;
-        document.getElementById('win-overlay').style.display = 'flex';
-        winSound.play().catch(()=>{});
-        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-    }, 6200);
-});
+        const track = document.getElementById('track');
+        const btn = document.getElementById('spin-btn');
+        const caseWidth = 150;
+        const winIndex = 75;
 
-generateTrack(characters[0]);
+        function getRandomChar() {
+            let total = characters.reduce((s, c) => s + c.weight, 0);
+            let rnd = Math.random() * total;
+            let sum = 0;
+            for (let c of characters) {
+                sum += c.weight;
+                if (rnd <= sum) return c;
+            }
+        }
+
+        function generateTrack(winner) {
+            track.innerHTML = '';
+            for (let i = 0; i < 90; i++) {
+                let char = (i === winIndex) ? winner : getRandomChar();
+                const div = document.createElement('div');
+                div.className = 'item';
+                let glow = char.weight <= 10 || char.isSecret ? `box-shadow: inset 0 0 20px ${char.color}; border-color: ${char.color};` : "";
+                div.innerHTML = `
+                    <div class="item-content" style="${glow}">
+                        <img src="${char.image}">
+                        <div class="item-name">${char.name}</div>
+                        <div class="item-rarity" style="background: ${char.color}">${char.rarity === 'СЕКРЕТНОЕ' ? 'СЕКРЕТНОЕ' : ''}</div>
+                    </div>
+                `;
+                track.appendChild(div);
+            }
+        }
+
+        let isSpinning = false;
+
+        btn.addEventListener('click', () => {
+            if (isSpinning) return;
+            const winner = getRandomChar();
+            generateTrack(winner);
+            
+            isSpinning = true;
+            btn.disabled = true;
+
+            track.style.transition = 'none';
+            track.style.transform = 'translateX(0px)';
+            
+            setTimeout(() => {
+                const center = document.querySelector('.roulette-wrapper').offsetWidth / 2;
+                const randomShift = Math.floor(Math.random() * 80) - 40;
+                const stopPos = (winIndex * caseWidth) + (caseWidth / 2) - center + randomShift;
+                
+                track.style.transition = 'transform 6s cubic-bezier(0.1, 0, 0.1, 1)';
+                track.style.transform = `translateX(-${stopPos}px)`;
+
+                let lastTick = 0;
+                const checkTick = () => {
+                    const currentPos = Math.abs(track.getBoundingClientRect().left);
+                    const currentIndex = Math.floor((currentPos + center) / caseWidth);
+                    
+                    if (currentIndex > lastTick) {
+                        lastTick = currentIndex;
+                        
+                        // --- ЛОГИКА ПРОВЕРКИ СЕКРЕТКИ ---
+                        const passingItem = track.children[currentIndex];
+                        // Проверяем текст внутри дива (мы добавили слово СЕКРЕТНОЕ выше)
+                        if (passingItem && passingItem.innerText.includes("СЕКРЕТНОЕ")) {
+                            secretPassSound.currentTime = 0;
+                            secretPassSound.play().catch(()=>{});
+                            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
+                        } else {
+                            playTick();
+                            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                        }
+                    }
+                    if (isSpinning) requestAnimationFrame(checkTick);
+                };
+                checkTick();
+            }, 100);
+
+            setTimeout(() => {
+                isSpinning = false;
+                btn.disabled = false;
+                
+                const winImg = document.getElementById('win-img');
+                const winVid = document.getElementById('win-video');
+                const overlay = document.getElementById('win-overlay');
+
+                // --- ЛОГИКА ФИНАЛА (КТО ВЫПАЛ) ---
+                if (winner.isSecret) {
+                    // Если это секретка: прячем фото, показываем видео
+                    winImg.style.display = 'none';
+                    winVid.style.display = 'block';
+                    winVid.src = winner.video;
+                    winVid.style.borderColor = winner.color;
+                    winVid.currentTime = 0;
+                    winVid.play().catch(()=>{}); // Запускаем видео со звуком
+                    winSound.pause(); // На всякий случай глушим дефолтный звук победы
+                } else {
+                    // Обычный дроп: показываем фото, прячем видео
+                    winImg.style.display = 'block';
+                    winVid.style.display = 'none';
+                    winVid.pause();
+                    winImg.src = winner.image;
+                    winImg.style.borderColor = winner.color;
+                    winSound.play().catch(()=>{});
+                }
+
+                document.getElementById('win-name').innerText = winner.name;
+                document.getElementById('win-rarity-text').innerText = winner.rarity;
+                document.getElementById('win-rarity-text').style.color = winner.color;
+                overlay.style.display = 'flex';
+                
+                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            }, 6200);
+        });
+
+        generateTrack(characters[0]);
     </script>
 </body>
 </html>
