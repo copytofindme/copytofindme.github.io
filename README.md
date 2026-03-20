@@ -1,1 +1,1 @@
-# copytofindme.github.io - its a Kwazemat Case open simulator
+# copytofindme.github.io - The Kwazemat Case open simulator
