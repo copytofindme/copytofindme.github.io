@@ -255,13 +255,18 @@
         let tickIndex = 0;
         
         const winSound = new Audio('opencase_win_sound_volume+.mp3');
-        const epicSound = new Audio('sounds_of_win/item_drop3_rare.mp3');
-        const mythicSound = new Audio('sounds_of_win/item_drop4_mythical.mp3');
-        const legendarySound = new Audio('sounds_of_win/item_drop5_legendary.mp3');
+        const epicSound = new Audio('epic_win.mp3');
+        const mythicSound = new Audio('mythic_win.mp3');
+        const legendarySound = new Audio('legendary_win.mp3');
         
+        // Устанавливаем громкость новых звуков
+        epicSound.volume = 0.1;
+        mythicSound.volume = 0.1;
+        legendarySound.volume = 0.1;
+
         const secretSoundPath = 'secret_donotopen/re-zero-return-by-death.mp3';
         const secretSnd = new Audio(secretSoundPath);
-        secretSnd.volume = 0.3;
+        secretSnd.volume = 0.1; // Секретка тоже 0.1 для баланса
 
         function playTick() {
             const sound = tickPool[tickIndex];
@@ -399,10 +404,11 @@
         btn.addEventListener('click', () => {
             if (isSpinning) return;
             
+            // Прогрев на громкости 0
             [winSound, epicSound, mythicSound, legendarySound, secretSnd].forEach(s => {
-                const oldVol = s.volume;
+                const targetVol = s.volume;
                 s.volume = 0;
-                s.play().then(() => { s.pause(); s.currentTime = 0; s.volume = oldVol; }).catch(()=>{});
+                s.play().then(() => { s.pause(); s.currentTime = 0; s.volume = targetVol; }).catch(()=>{});
             });
 
             const winner = getRandomChar();
@@ -436,7 +442,7 @@
                         const passingItem = track.children[currentIndex];
                         if (passingItem && passingItem.innerHTML.includes("IS_SECRET")) {
                             const tempSecret = new Audio(secretSoundPath);
-                            tempSecret.volume = 0.3;
+                            tempSecret.volume = 0.1;
                             tempSecret.play().catch(()=>{});
                             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
                         } else {
