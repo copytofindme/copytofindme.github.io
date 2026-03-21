@@ -108,12 +108,14 @@
             background: #1a1a1a;
             border: 2px solid #333;
             overflow: hidden;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
         }
         .pointer {
             position: absolute;
             left: 50%; top: 0; bottom: 0;
             width: 4px; background: #ff4444;
             z-index: 10; transform: translateX(-50%);
+            box-shadow: 0 0 10px rgba(255,68,68,0.5);
         }
         .roulette-track { display: flex; position: absolute; left: 0; top: 25px; will-change: transform; }
         .item { width: var(--case-width); height: 150px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; padding: 5px; }
@@ -131,9 +133,9 @@
             background: rgba(0,0,0,0.95); z-index: 100;
             flex-direction: column; align-items: center; justify-content: center;
         }
-        #win-img, #win-video { transform: scale(0.8); opacity: 0; transition: all 0.3s ease; }
+        #win-img, #win-video { transform: scale(0.8); opacity: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         #win-overlay.active #win-img, #win-overlay.active #win-video { transform: scale(1); opacity: 1; }
-        #win-video { display: none; width: 220px; border-radius: 20px; border: 5px solid white; }
+        #win-video { display: none; width: 220px; border-radius: 20px; border: 5px solid white; background: #000; }
     </style>
 </head>
 <body>
@@ -164,37 +166,31 @@
         const tg = window.Telegram.WebApp;
         tg.ready(); tg.expand();
         
-        // Функция создания аудио с фиксом для браузеров
         function createAudio(src, vol = 0.5) {
-            const audio = new Audio(src);
-            audio.volume = vol;
-            audio.preload = 'auto';
-            return audio;
+            const a = new Audio(src);
+            a.volume = vol;
+            return a;
         }
 
-        const tickPool = Array.from({ length: 10 }, () => createAudio('opencase_tick_sound_volume+.mp3', 0.4));
+        const tickPool = Array.from({ length: 12 }, () => createAudio('opencase_tick_sound_volume+.mp3', 0.4));
         let tickIndex = 0;
         
-        const winSound = createAudio('opencase_win_sound_volume+.mp3', 0.6);
-        const epicSound = createAudio('epic_win.mp3', 0.6);
-        const mythicSound = createAudio('mythic_win.mp3', 0.6);
-        const legendarySound = createAudio('legendary_win.mp3', 0.6);
-        
-        const secretSoundPath = 'secret_donotopen/re-zero-return-by-death.mp3';
-        const secretSnd = createAudio(secretSoundPath, 0.5);
+        const winSound = createAudio('opencase_win_sound_volume+.mp3', 0.5);
+        const epicSound = createAudio('sounds_of_win/item_drop3_rare.mp3', 0.5);
+        const mythicSound = createAudio('sounds_of_win/item_drop4_mythical.mp3', 0.5);
+        const legendarySound = createAudio('sounds_of_win/item_drop5_legendary.mp3', 0.5);
+        const secretSnd = createAudio('secret_donotopen/re-zero-return-by-death.mp3', 0.5);
 
         function playTick() {
-            const sound = tickPool[tickIndex];
-            sound.currentTime = 0;
-            sound.play().catch(() => {});
+            const s = tickPool[tickIndex];
+            s.currentTime = 0;
+            s.play().catch(()=>{});
             tickIndex = (tickIndex + 1) % tickPool.length;
         }
 
-        // РАЗБЛОКИРОВКА ЗВУКА (Клик пользователя)
         function unlockAudio() {
-            const allSounds = [...tickPool, winSound, epicSound, mythicSound, legendarySound, secretSnd];
-            allSounds.forEach(s => {
-                s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(e => console.log("Unlock error:", e));
+            [...tickPool, winSound, epicSound, mythicSound, legendarySound, secretSnd].forEach(s => {
+                s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(()=>{});
             });
             document.removeEventListener('click', unlockAudio);
             document.removeEventListener('touchstart', unlockAudio);
@@ -322,8 +318,7 @@
                         lastTick = currentIndex;
                         const passingItem = track.children[currentIndex];
                         if (passingItem && passingItem.innerHTML.includes("IS_SECRET")) {
-                            const tempSecret = createAudio(secretSoundPath, 0.4);
-                            tempSecret.play().catch(()=>{});
+                            createAudio('secret_donotopen/re-zero-return-by-death.mp3', 0.4).play().catch(()=>{});
                         } else {
                             playTick();
                         }
@@ -359,7 +354,7 @@
                     else if (winner.rarity === "Легендарная") targetSound = legendarySound;
                     
                     targetSound.currentTime = 0;
-                    targetSound.play().catch(e => console.log("Final play error:", e));
+                    targetSound.play().catch(()=>{});
                 }
 
                 document.getElementById('win-name').innerText = winner.name;
