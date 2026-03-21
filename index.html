@@ -266,7 +266,6 @@
         }
 
         function unlockAudio() {
-            // "Прогреваем" все звуки при первом же взаимодействии
             tickPool.forEach(s => { s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(()=>{}); });
             winSound.play().then(() => { winSound.pause(); winSound.currentTime = 0; }).catch(()=>{});
             secretSnd.play().then(() => { secretSnd.pause(); secretSnd.currentTime = 0; }).catch(()=>{});
@@ -356,10 +355,25 @@
             }
         }
 
+        function getVisualChar() {
+            // Уменьшаем вес АХнежки в 10 раз только для "пролетов"
+            const visualChars = characters.map(c => ({
+                ...c,
+                weight: c.isSecret ? c.weight / 10 : c.weight
+            }));
+            let total = visualChars.reduce((s, c) => s + c.weight, 0);
+            let rnd = Math.random() * total;
+            let sum = 0;
+            for (let c of visualChars) {
+                sum += c.weight;
+                if (rnd <= sum) return c;
+            }
+        }
+
         function generateTrack(winner) {
             track.innerHTML = '';
             for (let i = 0; i < 90; i++) {
-                let char = (i === winIndex) ? winner : getRandomChar();
+                let char = (i === winIndex) ? winner : getVisualChar();
                 const div = document.createElement('div');
                 div.className = 'item';
                 let glow = (char.weight <= 10 || char.isSecret) ? `box-shadow: inset 0 0 20px ${char.color}; border-color: ${char.color};` : "";
@@ -380,7 +394,6 @@
         btn.addEventListener('click', () => {
             if (isSpinning) return;
             
-            // ВАЖНО: Принудительно запускаем звуки на 0 громкости ПРЯМО В КЛИКЕ, чтобы ТГ разрешил их потом
             winSound.volume = 0;
             winSound.play().then(() => { winSound.pause(); winSound.currentTime = 0; winSound.volume = 1; }).catch(()=>{});
             secretSnd.volume = 0;
