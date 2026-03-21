@@ -242,7 +242,7 @@
         const winSound = new Audio('opencase_win_sound_volume+.mp3');
         const secretSoundPath = 'secret_donotopen/re-zero-return-by-death.mp3';
         const secretSnd = new Audio(secretSoundPath);
-        secretSnd.volume = 0.5;
+        secretSnd.volume = 0.3;
 
         function playTick() {
             const sound = tickPool[tickIndex];
@@ -286,7 +286,7 @@
             }
         ];
 
-        let stats = JSON.parse(localStorage.getItem('kz_stats_final_v2')) || {};
+        let stats = JSON.parse(localStorage.getItem('kz_stats_final_v3')) || {};
 
         function updateStatsUI() {
             const grid = document.getElementById('stats-grid');
@@ -390,7 +390,8 @@
                         lastTick = currentIndex;
                         const passingItem = track.children[currentIndex];
                         if (passingItem && passingItem.innerHTML.includes("IS_SECRET")) {
-                            new Audio(secretSoundPath).play().catch(()=>{});
+                            secretSnd.currentTime = 0;
+                            secretSnd.play().catch(()=>{});
                             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
                         } else {
                             playTick();
@@ -407,7 +408,7 @@
                 btn.disabled = false;
                 
                 stats[winner.name] = (stats[winner.name] || 0) + 1;
-                localStorage.setItem('kz_stats_final_v2', JSON.stringify(stats));
+                localStorage.setItem('kz_stats_final_v3', JSON.stringify(stats));
                 updateStatsUI();
                 
                 const winImg = document.getElementById('win-img');
@@ -417,20 +418,14 @@
                     winImg.style.display = 'none';
                     winVid.style.display = 'block';
                     winVid.style.borderColor = winner.color;
-                    
                     winVid.muted = true; 
-                    winVid.play().then(() => {
-                        winVid.muted = false;
-                    }).catch(() => {
-                        winVid.play(); 
-                    });
-                    winSound.pause();
+                    winVid.play().then(() => { winVid.muted = false; }).catch(() => { winVid.play(); });
                 } else {
                     winImg.style.display = 'block';
                     winVid.style.display = 'none';
-                    winVid.pause();
                     winImg.src = winner.image;
                     winImg.style.borderColor = winner.color;
+                    winSound.currentTime = 0;
                     winSound.play().catch(()=>{});
                 }
 
