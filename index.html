@@ -20,7 +20,7 @@
             overflow: hidden;
         }
 
-        /* === НОВОЕ: СТИЛИ СТАТИСТИКИ (начинаются здесь) === */
+        /* --- БЛОК СТАТИСТИКИ --- */
         .stats-container {
             background: #1a1a1a;
             border-radius: 20px;
@@ -55,6 +55,15 @@
             overflow: hidden;
             position: relative;
         }
+        /* Тот самый серый знак вопроса внутри */
+        .stat-box .question-mark {
+            display: block;
+            font-size: 24px;
+            font-weight: bold;
+            color: #444;
+        }
+        .unlocked .stat-box .question-mark { display: none; }
+        
         .stat-box img { width: 100%; height: 100%; object-fit: cover; display: none; }
         .unlocked .stat-box img { display: block; }
         
@@ -95,8 +104,8 @@
             text-transform: uppercase;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
-        /* === КОНЕЦ НОВЫХ СТИЛЕЙ СТАТИСТИКИ === */
 
+        /* --- ТВОЯ ОРИГИНАЛЬНАЯ РУЛЕТКА --- */
         .roulette-wrapper {
             position: relative;
             width: 100%;
@@ -205,6 +214,7 @@
         <div class="stats-grid" id="stats-grid"></div>
         <button id="toggle-stats-btn">статистика</button>
     </div>
+
     <h2 id="status-text">Kwazemat Case</h2>
 
     <div class="roulette-wrapper">
@@ -217,9 +227,7 @@
     <div id="win-overlay" onclick="closeOverlay()">
         <h1 id="win-rarity-text">ВЫПАЛО!</h1>
         <img id="win-img" src="" style="width: 220px; border-radius: 20px; border: 5px solid white;">
-        
         <video id="win-video" playsinline loop muted preload="auto"></video>
-        
         <h2 id="win-name">Название</h2>
         <p>Нажми, чтобы закрыть</p>
     </div>
@@ -275,8 +283,8 @@
             }
         ];
 
-        /* === НОВОЕ: ЛОГИКА СТАТИСТИКИ === */
-        let stats = JSON.parse(localStorage.getItem('kz_stats_new')) || {};
+        // --- ЛОГИКА СТАТИСТИКИ ---
+        let stats = JSON.parse(localStorage.getItem('kz_stats_final')) || {};
 
         function updateStatsUI() {
             const grid = document.getElementById('stats-grid');
@@ -285,9 +293,9 @@
                 const count = stats[c.name] || 0;
                 const slot = document.createElement('div');
                 slot.className = `stat-slot ${count > 0 ? 'unlocked' : 'locked'}`;
-
                 slot.innerHTML = `
                     <div class="stat-box" style="${count > 0 ? 'border-color:'+c.color : ''}">
+                        <span class="question-mark">?</span>
                         <img src="${c.image}">
                         <div class="stat-overlay" style="background: ${c.color}99; border: 1px solid ${c.color}; color: #121212;">
                             ${count}
@@ -302,8 +310,7 @@
             document.getElementById('stats-container').classList.toggle('show-stats');
         });
         
-        updateStatsUI(); // Отрисовываем статистику при загрузке
-        /* === КОНЕЦ ЛОГИКИ СТАТИСТИКИ === */
+        updateStatsUI();
 
         const track = document.getElementById('track');
         const btn = document.getElementById('spin-btn');
@@ -389,11 +396,10 @@
                 isSpinning = false;
                 btn.disabled = false;
                 
-                /* === НОВОЕ: СОХРАНЕНИЕ СТАТИСТИКИ ПОСЛЕ ПОБЕДЫ === */
+                // Сохраняем в статистику
                 stats[winner.name] = (stats[winner.name] || 0) + 1;
-                localStorage.setItem('kz_stats_new', JSON.stringify(stats));
+                localStorage.setItem('kz_stats_final', JSON.stringify(stats));
                 updateStatsUI();
-                /* === КОНЕЦ === */
                 
                 const winImg = document.getElementById('win-img');
                 const overlay = document.getElementById('win-overlay');
@@ -402,13 +408,8 @@
                     winImg.style.display = 'none';
                     winVid.style.display = 'block';
                     winVid.style.borderColor = winner.color;
-                    
                     winVid.muted = true; 
-                    winVid.play().then(() => {
-                        winVid.muted = false;
-                    }).catch(() => {
-                        winVid.play(); 
-                    });
+                    winVid.play().then(() => { winVid.muted = false; }).catch(() => { winVid.play(); });
                     winSound.pause();
                 } else {
                     winImg.style.display = 'block';
