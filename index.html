@@ -17,131 +17,144 @@
             justify-content: center;
             min-height: 100vh;
             margin: 0;
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
-        /* --- БЛОК ДОСТИЖЕНИЙ --- */
-        .stats-wrapper {
-            position: relative;
+        /* --- БЛОК СТАТИСТИКИ (КАК НА ФОТО) --- */
+        .stats-container {
             background: #1a1a1a;
             border-radius: 15px;
-            border: 1px solid #222;
+            border: 1px solid #333;
+            padding: 15px;
             width: 90%;
-            max-width: 380px;
-            margin-bottom: 10px;
-            padding: 12px 12px 25px 12px;
+            max-width: 400px;
+            margin-bottom: 20px;
+            position: relative;
         }
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 10px;
+            margin-bottom: 10px;
         }
-        .stat-item {
+        .stat-slot {
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-        .stat-icon {
-            width: 52px;
-            height: 52px;
-            border-radius: 10px;
+        .stat-box {
+            width: 50px;
+            height: 50px;
+            background: #222;
+            border-radius: 8px;
+            border: 2px solid #333;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #222;
-            border: 2px solid #2a2a2a;
-            font-weight: bold;
-            font-size: 18px;
-            color: #333;
             overflow: hidden;
-            transition: all 0.3s ease;
+            font-weight: bold;
+            color: #444;
         }
-        .stat-icon img { width: 100%; height: 100%; object-fit: cover; display: none; }
-        
-        /* Разблокированные иконки */
-        .stat-item.unlocked .stat-icon img { display: block; }
-        .stat-item.unlocked .stat-icon span { display: none; }
+        .stat-box img { width: 100%; height: 100%; object-fit: cover; display: none; }
+        .unlocked .stat-box img { display: block; }
+        .unlocked .stat-box span { display: none; }
 
-        /* ЧИСЛА СТАТИСТИКИ (скрыты) */
-        .stat-count {
+        /* ЦИФРЫ (СКРЫТЫ ПО УМОЛЧАНИЮ) */
+        .stat-num {
             font-size: 12px;
             font-weight: 900;
             margin-top: 4px;
-            opacity: 0; /* Невидимы по умолчанию */
-            transition: opacity 0.3s ease;
+            opacity: 0;
+            transition: opacity 0.2s;
         }
-        .stats-wrapper.show-nums .stat-count { opacity: 1; }
+        .show-stats .stat-num { opacity: 1; }
 
-        /* Кнопка "статистика" */
-        #stats-toggle {
+        /* МАЛЕНЬКАЯ СЕРАЯ КНОПКА */
+        #toggle-stats-btn {
             position: absolute;
-            bottom: 6px;
-            right: 12px;
+            bottom: 10px;
+            right: 15px;
+            background: #333;
+            color: #888;
+            border: none;
+            border-radius: 20px;
+            padding: 4px 12px;
             font-size: 10px;
-            color: #444;
+            font-weight: bold;
             cursor: pointer;
-            text-decoration: none;
-            user-select: none;
+            text-transform: uppercase;
         }
+        #toggle-stats-btn:active { background: #444; }
 
-        /* --- РУЛЕТКА --- */
+        /* --- ТВОИ СТИЛИ РУЛЕТКИ --- */
         .roulette-wrapper {
             position: relative;
             width: 100%;
-            max-width: 500px;
-            height: 180px;
-            margin: 10px 0;
+            max-width: 600px;
+            height: 200px;
+            margin: 20px 0;
             background: #1a1a1a;
             border: 2px solid #333;
             overflow: hidden;
-            border-radius: 5px;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
         }
         .pointer {
             position: absolute;
             left: 50%; top: 0; bottom: 0;
-            width: 3px; background: #ff4444;
+            width: 4px; background: #ff4444;
             z-index: 10; transform: translateX(-50%);
             box-shadow: 0 0 10px rgba(255,68,68,0.5);
         }
-        .roulette-track { display: flex; position: absolute; left: 0; top: 15px; }
-        .item { width: var(--case-width); height: 140px; flex-shrink: 0; display: flex; padding: 5px; box-sizing: border-box; }
+        .roulette-track {
+            display: flex;
+            position: absolute;
+            left: 0; top: 25px;
+            will-change: transform;
+        }
+        .item {
+            width: var(--case-width);
+            height: 150px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            padding: 5px;
+        }
         .item-content {
             width: 100%; height: 100%;
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
             background: #222; border-radius: 8px; border: 1px solid #333;
-            position: relative;
         }
-        .item img { width: 70px; height: 70px; border-radius: 6px; margin-bottom: 5px; }
-        .item-name { font-size: 10px; font-weight: bold; text-align: center; color: #ddd; }
-        
-        /* Полоска редкости */
-        .item-rarity { position: absolute; bottom: 6px; width: 70%; height: 3px; border-radius: 2px; }
+        .item img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; margin-bottom: 5px; }
+        .item-name { font-size: 11px; font-weight: bold; text-align: center; width: 90%; overflow: hidden; }
+        .item-rarity { width: 80%; height: 4px; margin-top: 8px; border-radius: 2px; }
 
         #spin-btn {
-            padding: 12px 40px; background: #2aabee; color: white;
-            border: none; border-radius: 50px; font-size: 16px; font-weight: bold; cursor: pointer;
-            margin-top: 10px;
+            padding: 15px 50px; background: #2aabee; color: white;
+            border: none; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer;
         }
-        #spin-btn:disabled { background: #333; color: #666; }
+        #spin-btn:disabled { background: #444; }
 
-        /* ОКНО ПОБЕДЫ */
         #win-overlay {
-            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.98); z-index: 100; flex-direction: column; align-items: center; justify-content: center;
+            display: none; position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.95); z-index: 100;
+            flex-direction: column; align-items: center; justify-content: center; text-align: center;
         }
-        #win-video { display: none; width: 260px; border-radius: 15px; border: 4px solid; }
-        #win-img { width: 240px; border-radius: 15px; border: 4px solid; }
+        #win-video { display: none; width: 220px; border-radius: 20px; border: 5px solid white; background: #000; }
     </style>
 </head>
 <body>
 
-    <div class="stats-wrapper" id="stats-box">
+    <div class="stats-container" id="stats-container">
         <div class="stats-grid" id="stats-grid"></div>
-        <div id="stats-toggle">статистика</div>
+        <button id="toggle-stats-btn">статистика</button>
     </div>
 
-    <h2 style="margin: 5px 0; font-size: 18px;">Kwazemat Case</h2>
+    <h2 id="status-text">Kwazemat Case</h2>
 
     <div class="roulette-wrapper">
         <div class="pointer"></div>
@@ -150,18 +163,19 @@
 
     <button id="spin-btn">ОТКРЫТЬ КЕЙС</button>
 
-    <div id="win-overlay" onclick="this.style.display='none'">
-        <h1 id="win-rarity" style="margin-bottom: 10px;">ВЫПАЛО!</h1>
-        <img id="win-img" src="">
-        <video id="win-video" playsinline loop muted></video>
-        <h2 id="win-name" style="margin-top: 15px;">Название</h2>
-        <p style="color: #444; font-size: 12px;">нажми, чтобы закрыть</p>
+    <div id="win-overlay" onclick="closeOverlay()">
+        <h1 id="win-rarity-text">ВЫПАЛО!</h1>
+        <img id="win-img" src="" style="width: 220px; border-radius: 20px; border: 5px solid white;">
+        <video id="win-video" playsinline loop muted preload="auto"></video>
+        <h2 id="win-name">Название</h2>
+        <p>Нажми, чтобы закрыть</p>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.ready();
-
+        tg.expand();
+        
         const characters = [
             { id: "amour", name: "Amour plastique", image: "https://i.ibb.co/s9cpgL5b/zxz.png", rarity: "Обычная", color: "#A0A0A0", weight: 35 },
             { id: "perdel", name: "Я НЕ ПЕРДЕЛ", image: "https://i.ibb.co/6RzPJ2PK/Picsart-26-03-19-17-28-57-544.jpg", rarity: "Редкая", color: "#3498DB", weight: 25 },
@@ -173,42 +187,61 @@
                 id: "secret", name: "АХнежка", 
                 image: "https://i.ibb.co/ZR6ZQrtQ/secret.png",
                 video: "secret_donotopen/secret.mp4",
-                rarity: "INCREDIBLE GAZZY", color: "#008a19", weight: 1, isSecret: true 
+                rarity: "INCREDIBLE GAZZY", color: "#008a19", weight: 0.8, isSecret: true 
             }
         ];
 
-        let userStats = JSON.parse(localStorage.getItem('k_stats')) || {};
+        // --- ЛОГИКА СТАТИСТИКИ ---
+        let stats = JSON.parse(localStorage.getItem('user_stats')) || {};
 
-        // Переключатель цифр
-        document.getElementById('stats-toggle').onclick = (e) => {
-            e.stopPropagation();
-            document.getElementById('stats-box').classList.toggle('show-nums');
-        };
-
-        function updateUI() {
+        function updateStatsGrid() {
             const grid = document.getElementById('stats-grid');
             grid.innerHTML = '';
-            characters.forEach(c => {
-                const count = userStats[c.id] || 0;
-                const unlocked = count > 0;
-                const div = document.createElement('div');
-                div.className = `stat-item ${unlocked ? 'unlocked' : ''}`;
+            characters.forEach(char => {
+                const count = stats[char.id] || 0;
+                const slot = document.createElement('div');
+                slot.className = `stat-slot ${count > 0 ? 'unlocked' : ''}`;
                 
-                // Светлая обводка (добавляем прозрачность к основному цвету)
-                const border = unlocked ? `border-color: ${c.color}; box-shadow: 0 0 10px ${c.color}44;` : '';
-
-                div.innerHTML = `
-                    <div class="stat-icon" style="${border}">
-                        <span>${c.isSecret ? '???' : '?'}</span>
-                        <img src="${c.image}">
+                slot.innerHTML = `
+                    <div class="stat-box" style="${count > 0 ? 'border-color:'+char.color : ''}">
+                        <span>${char.isSecret ? '???' : '?'}</span>
+                        <img src="${char.image}">
                     </div>
-                    <div class="stat-count" style="color: ${c.color}">${count}</div>
+                    <div class="stat-num" style="color:${char.color}">${count}</div>
                 `;
-                grid.appendChild(div);
+                grid.appendChild(slot);
             });
         }
 
-        function getWinner() {
+        document.getElementById('toggle-stats-btn').onclick = () => {
+            document.getElementById('stats-container').classList.toggle('show-stats');
+        };
+
+        // --- ТВОЯ ЛОГИКА РУЛЕТКИ ---
+        const tickPool = Array.from({ length: 15 }, () => new Audio('opencase_tick_sound_volume+.mp3'));
+        let tickIndex = 0;
+        const winSound = new Audio('opencase_win_sound_volume+.mp3');
+        const secretSoundPath = 'secret_donotopen/re-zero-return-by-death.mp3';
+
+        function playTick() {
+            const sound = tickPool[tickIndex];
+            sound.currentTime = 0;
+            sound.play().catch(() => {});
+            tickIndex = (tickIndex + 1) % tickPool.length;
+        }
+
+        function closeOverlay() {
+            document.getElementById('win-overlay').style.display = 'none';
+            const vid = document.getElementById('win-video');
+            vid.pause(); vid.src = ""; 
+        }
+
+        const track = document.getElementById('track');
+        const btn = document.getElementById('spin-btn');
+        const caseWidth = 150;
+        const winIndex = 75;
+
+        function getRandomChar() {
             let total = characters.reduce((s, c) => s + c.weight, 0);
             let rnd = Math.random() * total;
             let sum = 0;
@@ -216,88 +249,105 @@
                 sum += c.weight;
                 if (rnd <= sum) return c;
             }
-            return characters[0];
         }
 
-        function buildTrack(winChar) {
-            const track = document.getElementById('track');
+        function generateTrack(winner) {
             track.innerHTML = '';
             for (let i = 0; i < 90; i++) {
-                let c = (i === 75) ? winChar : characters[Math.floor(Math.random() * characters.length)];
+                let char = (i === winIndex) ? winner : getRandomChar();
                 const div = document.createElement('div');
                 div.className = 'item';
+                let glow = (char.weight <= 10 || char.isSecret) ? `box-shadow: inset 0 0 20px ${char.color}; border-color: ${char.color};` : "";
                 div.innerHTML = `
-                    <div class="item-content">
-                        <img src="${c.image}">
-                        <div class="item-name">${c.name}</div>
-                        <div class="item-rarity" style="background: ${c.color}"></div>
+                    <div class="item-content" style="${glow}">
+                        <img src="${char.image}">
+                        <div class="item-name">${char.name}</div>
+                        <span style="display:none">${char.isSecret ? 'IS_SECRET' : ''}</span>
+                        <div class="item-rarity" style="background: ${char.color}"></div>
                     </div>
                 `;
                 track.appendChild(div);
             }
         }
 
-        const tick = new Audio('opencase_tick_sound_volume+.mp3');
-        const winSnd = new Audio('opencase_win_sound_volume+.mp3');
+        let isSpinning = false;
+        btn.addEventListener('click', () => {
+            if (isSpinning) return;
+            const winner = getRandomChar();
+            const winVid = document.getElementById('win-video');
+            if (winner.isSecret) { winVid.src = winner.video; winVid.load(); }
 
-        document.getElementById('spin-btn').onclick = function() {
-            const btn = this;
+            generateTrack(winner);
+            isSpinning = true;
             btn.disabled = true;
-            const winner = getWinner();
-            buildTrack(winner);
-
-            const track = document.getElementById('track');
             track.style.transition = 'none';
-            track.style.transform = 'translateX(0)';
-
+            track.style.transform = 'translateX(0px)';
+            
             setTimeout(() => {
                 const center = document.querySelector('.roulette-wrapper').offsetWidth / 2;
-                const target = (75 * 150) + 75 - center + (Math.random() * 60 - 30);
+                const randomShift = Math.floor(Math.random() * 80) - 40;
+                const stopPos = (winIndex * caseWidth) + (caseWidth / 2) - center + randomShift;
                 track.style.transition = 'transform 6s cubic-bezier(0.1, 0, 0.1, 1)';
-                track.style.transform = `translateX(-${target}px)`;
+                track.style.transform = `translateX(-${stopPos}px)`;
 
-                // Звук тика
-                let lastPos = 0;
-                const interval = setInterval(() => {
-                    let cur = Math.floor((Math.abs(track.getBoundingClientRect().left) + center) / 150);
-                    if (cur !== lastPos) {
-                        tick.currentTime = 0; tick.play().catch(()=>{});
-                        lastPos = cur;
+                let lastTick = 0;
+                const checkTick = () => {
+                    if (!isSpinning) return;
+                    const currentPos = Math.abs(track.getBoundingClientRect().left);
+                    const currentIndex = Math.floor((currentPos + center) / caseWidth);
+                    if (currentIndex > lastTick) {
+                        lastTick = currentIndex;
+                        const passingItem = track.children[currentIndex];
+                        if (passingItem && passingItem.innerHTML.includes("IS_SECRET")) {
+                            new Audio(secretSoundPath).play().catch(()=>{});
+                            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
+                        } else {
+                            playTick();
+                            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                        }
                     }
-                }, 50);
+                    requestAnimationFrame(checkTick);
+                };
+                checkTick();
+            }, 100);
 
-                setTimeout(() => {
-                    clearInterval(interval);
-                    userStats[winner.id] = (userStats[winner.id] || 0) + 1;
-                    localStorage.setItem('k_stats', JSON.stringify(userStats));
-                    updateUI();
+            setTimeout(() => {
+                isSpinning = false;
+                btn.disabled = false;
+                
+                // СОХРАНЕНИЕ СТАТИСТИКИ
+                stats[winner.id] = (stats[winner.id] || 0) + 1;
+                localStorage.setItem('user_stats', JSON.stringify(stats));
+                updateStatsGrid();
 
-                    // Показ окна
-                    const overlay = document.getElementById('win-overlay');
-                    const v = document.getElementById('win-video');
-                    const im = document.getElementById('win-img');
-                    
-                    if (winner.isSecret) {
-                        im.style.display = 'none'; v.style.display = 'block';
-                        v.src = winner.video; v.style.borderColor = winner.color;
-                        v.play().catch(() => {});
-                    } else {
-                        v.style.display = 'none'; im.style.display = 'block';
-                        im.src = winner.image; im.style.borderColor = winner.color;
-                        winSnd.play().catch(()=>{});
-                    }
+                const winImg = document.getElementById('win-img');
+                const overlay = document.getElementById('win-overlay');
 
-                    document.getElementById('win-name').innerText = winner.name;
-                    document.getElementById('win-rarity').innerText = winner.rarity;
-                    document.getElementById('win-rarity').style.color = winner.color;
-                    overlay.style.display = 'flex';
-                    btn.disabled = false;
-                }, 6200);
-            }, 50);
-        };
+                if (winner.isSecret) {
+                    winImg.style.display = 'none';
+                    winVid.style.display = 'block';
+                    winVid.style.borderColor = winner.color;
+                    winVid.muted = true; 
+                    winVid.play().then(() => { winVid.muted = false; }).catch(() => { winVid.play(); });
+                    winSound.pause();
+                } else {
+                    winImg.style.display = 'block';
+                    winVid.style.display = 'none';
+                    winImg.src = winner.image;
+                    winImg.style.borderColor = winner.color;
+                    winSound.play().catch(()=>{});
+                }
 
-        updateUI();
-        buildTrack(characters[0]);
+                document.getElementById('win-name').innerText = winner.name;
+                document.getElementById('win-rarity-text').innerText = winner.rarity;
+                document.getElementById('win-rarity-text').style.color = winner.color;
+                overlay.style.display = 'flex';
+                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            }, 6200);
+        });
+
+        updateStatsGrid();
+        generateTrack(characters[0]);
     </script>
 </body>
 </html>
