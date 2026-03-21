@@ -201,7 +201,6 @@
             text-align: center;
         }
         
-        /* Анимируем только картинку и видео */
         #win-img, #win-video {
             transform: scale(0.8);
             opacity: 0;
@@ -267,6 +266,7 @@
         }
 
         function unlockAudio() {
+            // "Прогреваем" все звуки при первом же взаимодействии
             tickPool.forEach(s => { s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(()=>{}); });
             winSound.play().then(() => { winSound.pause(); winSound.currentTime = 0; }).catch(()=>{});
             secretSnd.play().then(() => { secretSnd.pause(); secretSnd.currentTime = 0; }).catch(()=>{});
@@ -379,6 +379,13 @@
 
         btn.addEventListener('click', () => {
             if (isSpinning) return;
+            
+            // ВАЖНО: Принудительно запускаем звуки на 0 громкости ПРЯМО В КЛИКЕ, чтобы ТГ разрешил их потом
+            winSound.volume = 0;
+            winSound.play().then(() => { winSound.pause(); winSound.currentTime = 0; winSound.volume = 1; }).catch(()=>{});
+            secretSnd.volume = 0;
+            secretSnd.play().then(() => { secretSnd.pause(); secretSnd.currentTime = 0; secretSnd.volume = 0.3; }).catch(()=>{});
+
             const winner = getRandomChar();
             
             const winVid = document.getElementById('win-video');
@@ -409,8 +416,9 @@
                         lastTick = currentIndex;
                         const passingItem = track.children[currentIndex];
                         if (passingItem && passingItem.innerHTML.includes("IS_SECRET")) {
-                            secretSnd.currentTime = 0;
-                            secretSnd.play().catch(()=>{});
+                            const tempSecret = new Audio(secretSoundPath);
+                            tempSecret.volume = 0.3;
+                            tempSecret.play().catch(()=>{});
                             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
                         } else {
                             playTick();
@@ -445,16 +453,14 @@
                     winImg.src = winner.image;
                     winImg.style.borderColor = winner.color;
                     winSound.currentTime = 0;
-                    winSound.play().catch(()=>{});
+                    winSound.play().catch((e)=>console.log("WinSound Error:", e));
                 }
 
                 document.getElementById('win-name').innerText = winner.name;
                 document.getElementById('win-rarity-text').innerText = winner.rarity;
                 document.getElementById('win-rarity-text').style.color = winner.color;
                 
-                // Мгновенно показываем оверлей
                 overlay.style.display = 'flex';
-                // Запускаем анимацию контента через миг
                 setTimeout(() => {
                     overlay.classList.add('active');
                 }, 10);
