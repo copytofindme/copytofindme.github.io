@@ -259,14 +259,13 @@
         const mythicSound = new Audio('mythic_win.mp3');
         const legendarySound = new Audio('legendary_win.mp3');
         
-        // Устанавливаем громкость новых звуков
-        epicSound.volume = 0.1;
-        mythicSound.volume = 0.1;
-        legendarySound.volume = 0.1;
+        epicSound.volume = 0.5;
+        mythicSound.volume = 0.5;
+        legendarySound.volume = 0.5;
 
         const secretSoundPath = 'secret_donotopen/re-zero-return-by-death.mp3';
         const secretSnd = new Audio(secretSoundPath);
-        secretSnd.volume = 0.1; // Секретка тоже 0.1 для баланса
+        secretSnd.volume = 0.5; 
 
         function playTick() {
             const sound = tickPool[tickIndex];
