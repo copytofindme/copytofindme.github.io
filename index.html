@@ -20,7 +20,6 @@
             overflow: hidden;
         }
 
-        /* --- БЛОК СТАТИСТИКИ --- */
         .stats-container {
             background: #1a1a1a;
             border-radius: 20px;
@@ -55,12 +54,14 @@
             overflow: hidden;
             position: relative;
         }
-        /* Тот самый серый знак вопроса внутри */
         .stat-box .question-mark {
             display: block;
             font-size: 24px;
             font-weight: bold;
             color: #444;
+        }
+        .stat-box .question-mark.secret-placeholder {
+            font-size: 18px;
         }
         .unlocked .stat-box .question-mark { display: none; }
         
@@ -105,7 +106,6 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
 
-        /* --- ТВОЯ ОРИГИНАЛЬНАЯ РУЛЕТКА --- */
         .roulette-wrapper {
             position: relative;
             width: 100%;
@@ -241,6 +241,8 @@
         let tickIndex = 0;
         const winSound = new Audio('opencase_win_sound_volume+.mp3');
         const secretSoundPath = 'secret_donotopen/re-zero-return-by-death.mp3';
+        const secretSnd = new Audio(secretSoundPath);
+        secretSnd.volume = 0.5;
 
         function playTick() {
             const sound = tickPool[tickIndex];
@@ -252,6 +254,7 @@
         function unlockAudio() {
             tickPool.forEach(s => { s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(()=>{}); });
             winSound.play().then(() => { winSound.pause(); winSound.currentTime = 0; }).catch(()=>{});
+            secretSnd.play().then(() => { secretSnd.pause(); secretSnd.currentTime = 0; }).catch(()=>{});
             document.removeEventListener('click', unlockAudio);
             document.removeEventListener('touchstart', unlockAudio);
         }
@@ -283,8 +286,7 @@
             }
         ];
 
-        // --- ЛОГИКА СТАТИСТИКИ ---
-        let stats = JSON.parse(localStorage.getItem('kz_stats_final')) || {};
+        let stats = JSON.parse(localStorage.getItem('kz_stats_final_v2')) || {};
 
         function updateStatsUI() {
             const grid = document.getElementById('stats-grid');
@@ -293,9 +295,17 @@
                 const count = stats[c.name] || 0;
                 const slot = document.createElement('div');
                 slot.className = `stat-slot ${count > 0 ? 'unlocked' : 'locked'}`;
+                
+                let placeholderText = '?';
+                let placeholderClass = 'question-mark';
+                if (c.isSecret) {
+                    placeholderText = '???';
+                    placeholderClass += ' secret-placeholder';
+                }
+
                 slot.innerHTML = `
                     <div class="stat-box" style="${count > 0 ? 'border-color:'+c.color : ''}">
-                        <span class="question-mark">?</span>
+                        <span class="${placeholderClass}">${placeholderText}</span>
                         <img src="${c.image}">
                         <div class="stat-overlay" style="background: ${c.color}99; border: 1px solid ${c.color}; color: #121212;">
                             ${count}
@@ -396,9 +406,8 @@
                 isSpinning = false;
                 btn.disabled = false;
                 
-                // Сохраняем в статистику
                 stats[winner.name] = (stats[winner.name] || 0) + 1;
-                localStorage.setItem('kz_stats_final', JSON.stringify(stats));
+                localStorage.setItem('kz_stats_final_v2', JSON.stringify(stats));
                 updateStatsUI();
                 
                 const winImg = document.getElementById('win-img');
@@ -408,8 +417,13 @@
                     winImg.style.display = 'none';
                     winVid.style.display = 'block';
                     winVid.style.borderColor = winner.color;
+                    
                     winVid.muted = true; 
-                    winVid.play().then(() => { winVid.muted = false; }).catch(() => { winVid.play(); });
+                    winVid.play().then(() => {
+                        winVid.muted = false;
+                    }).catch(() => {
+                        winVid.play(); 
+                    });
                     winSound.pause();
                 } else {
                     winImg.style.display = 'block';
