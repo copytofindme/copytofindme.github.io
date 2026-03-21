@@ -163,244 +163,240 @@
         <p>Нажми, чтобы закрыть</p>
     </div>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready(); tg.expand();
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.ready(); tg.expand();
+    
+    const AUDIO_SETTINGS = {
+        tick:      { src: 'opencase_tick_sound_volume+.mp3', volume: 0.4 },
+        standard:  { src: 'opencase_win_sound_volume+.mp3', volume: 0.8 },
+        epic:      { src: 'sounds_of_win/item_drop3_rare.mp3', volume: 0.8 },
+        mythic:    { src: 'sounds_of_win/item_drop4_mythical.mp3', volume: 0.8 },
+        legendary: { src: 'sounds_of_win/item_drop5_legendary.mp3', volume: 0.8 },
+        secret:    { src: 'secret_donotopen/re-zero-return-by-death.mp3', volume: 0.5 }
+    };
 
-        // ==========================================
-        // НАСТРОЙКИ ЗВУКОВ (ГРОМКОСТЬ И ПУТИ ЗДЕСЬ)
-        // ==========================================
-        const AUDIO_SETTINGS = {
-            tick:      { src: 'opencase_tick_sound_volume+.mp3', volume: 0.4 },
-            standard:  { src: 'opencase_win_sound_volume+.mp3', volume: 0.8 },
-            epic:      { src: 'sounds_of_win/item_drop3_rare.mp3', volume: 0.2 },
-            mythic:    { src: 'sounds_of_win/item_drop4_mythical.mp3', volume: 0.2 },
-            legendary: { src: 'sounds_of_win/item_drop5_legendary.mp3', volume: 0.2 },
-            secret:    { src: 'secret_donotopen/re-zero-return-by-death.mp3', volume: 0.4 }
-        };
+    function createAudio(config) {
+        const a = new Audio(config.src);
+        a.volume = config.volume;
+        a.preload = 'auto'; 
+        return a;
+    }
 
-        function createAudio(config) {
-            const a = new Audio(config.src);
-            a.volume = config.volume;
-            a.preload = 'auto'; // Просим браузер грузить заранее
-            return a;
-        }
+    const tickPool = Array.from({ length: 12 }, () => createAudio(AUDIO_SETTINGS.tick));
+    let tickIndex = 0;
+    
+    const winSound = createAudio(AUDIO_SETTINGS.standard);
+    const epicSound = createAudio(AUDIO_SETTINGS.epic);
+    const mythicSound = createAudio(AUDIO_SETTINGS.mythic);
+    const legendarySound = createAudio(AUDIO_SETTINGS.legendary);
+    const secretSnd = createAudio(AUDIO_SETTINGS.secret);
 
-        // Создаем пул звуков для рулетки и основные звуки
-        const tickPool = Array.from({ length: 12 }, () => createAudio(AUDIO_SETTINGS.tick));
-        let tickIndex = 0;
-        
-        const winSound = createAudio(AUDIO_SETTINGS.standard);
-        const epicSound = createAudio(AUDIO_SETTINGS.epic);
-        const mythicSound = createAudio(AUDIO_SETTINGS.mythic);
-        const legendarySound = createAudio(AUDIO_SETTINGS.legendary);
-        const secretSnd = createAudio(AUDIO_SETTINGS.secret);
+    function playTick() {
+        const s = tickPool[tickIndex];
+        s.currentTime = 0;
+        s.play().catch(()=>{});
+        tickIndex = (tickIndex + 1) % tickPool.length;
+    }
 
-        function playTick() {
-            const s = tickPool[tickIndex];
-            s.currentTime = 0;
-            s.play().catch(()=>{});
-            tickIndex = (tickIndex + 1) % tickPool.length;
-        }
-
-        // Жесткая разблокировка звука при первом клике (для телефонов)
-        function unlockAudio() {
-            const allSounds = [...tickPool, winSound, epicSound, mythicSound, legendarySound, secretSnd];
-            allSounds.forEach(s => {
-                s.load(); // Принудительная загрузка
-                s.play().then(() => { 
-                    s.pause(); 
-                    s.currentTime = 0; 
-                }).catch(()=>{});
-            });
-            document.removeEventListener('click', unlockAudio);
-            document.removeEventListener('touchstart', unlockAudio);
-        }
-        document.addEventListener('click', unlockAudio);
-        document.addEventListener('touchstart', unlockAudio);
-
-        function closeOverlay() {
-            const overlay = document.getElementById('win-overlay');
-            overlay.classList.remove('active');
-            setTimeout(() => {
-                overlay.style.display = 'none';
-                const vid = document.getElementById('win-video');
-                vid.pause();
-                vid.muted = true; // Глушим видео при закрытии
-            }, 300);
-        }
-        
-        const characters = [
-            { name: "Amour plastique", image: "https://i.ibb.co/s9cpgL5b/zxz.png", rarity: "Обычная", color: "#A0A0A0", weight: 35 },
-            { name: "Я НЕ ПЕРДЕЛ", image: "https://i.ibb.co/6RzPJ2PK/Picsart-26-03-19-17-28-57-544.jpg", rarity: "Редкая", color: "#3498DB", weight: 25 },
-            { name: "Еврейское логово", image: "https://i.ibb.co/S49Wdtph/600-600.png", rarity: "Сверхредкая", color: "#3442db", weight: 20 },
-            { name: "ПАРНУХА", image: "https://i.ibb.co/ZpSGBcvc/image.png", rarity: "Эпическая", color: "#9B59B6", weight: 10 },
-            { name: "TURKISH KILLER", image: "https://i.ibb.co/Y7NcF17G/TURKISH-KILLER.png", rarity: "Мифическая", color: "#d61e1e", weight: 7 },
-            { name: "Иисус", image: "https://i.ibb.co/jdXbbr7/image.png", rarity: "Легендарная", color: "#F1C40F", weight: 3 },
-            { 
-                name: "АХнежка", 
-                image: "https://i.ibb.co/ZR6ZQrtQ/secret.png",
-                video: "secret_donotopen/secret.mp4",
-                rarity: "INCREDIBLE GAZZY", 
-                color: "#008a19", 
-                weight: 0.8, 
-                isSecret: true 
-            }
-        ];
-
-        let stats = JSON.parse(localStorage.getItem('kz_stats_final_v3')) || {};
-
-        function updateStatsUI() {
-            const grid = document.getElementById('stats-grid');
-            grid.innerHTML = '';
-            characters.forEach(c => {
-                const count = stats[c.name] || 0;
-                const slot = document.createElement('div');
-                slot.className = `stat-slot ${count > 0 ? 'unlocked' : 'locked'}`;
-                slot.innerHTML = `
-                    <div class="stat-box" style="${count > 0 ? 'border-color:'+c.color : ''}">
-                        <span class="question-mark ${c.isSecret ? 'secret-placeholder' : ''}">${c.isSecret ? '???' : '?'}</span>
-                        <img src="${c.image}">
-                        <div class="stat-overlay" style="background: ${c.color}99; border: 1px solid ${c.color}; color: #121212;">${count}</div>
-                    </div>
-                `;
-                grid.appendChild(slot);
-            });
-        }
-        document.getElementById('toggle-stats-btn').addEventListener('click', () => {
-            document.getElementById('stats-container').classList.toggle('show-stats');
+    function unlockAudio() {
+        const allSounds = [...tickPool, winSound, epicSound, mythicSound, legendarySound, secretSnd];
+        allSounds.forEach(s => {
+            s.load(); 
+            s.play().then(() => { 
+                s.pause(); 
+                s.currentTime = 0; 
+            }).catch(()=>{});
         });
-        updateStatsUI();
+        document.removeEventListener('click', unlockAudio);
+        document.removeEventListener('touchstart', unlockAudio);
+    }
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio);
 
-        const track = document.getElementById('track');
-        const btn = document.getElementById('spin-btn');
-        const caseWidth = 150;
-        const winIndex = 75;
+    function closeOverlay() {
+        const overlay = document.getElementById('win-overlay');
+        overlay.classList.remove('active');
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            const vid = document.getElementById('win-video');
+            vid.pause();
+            vid.muted = true;
+        }, 300);
+    }
+    
+    const characters = [
+        { name: "Amour plastique", image: "https://i.ibb.co/s9cpgL5b/zxz.png", rarity: "Обычная", color: "#A0A0A0", weight: 35 },
+        { name: "Я НЕ ПЕРДЕЛ", image: "https://i.ibb.co/6RzPJ2PK/Picsart-26-03-19-17-28-57-544.jpg", rarity: "Редкая", color: "#3498DB", weight: 25 },
+        { name: "Еврейское логово", image: "https://i.ibb.co/S49Wdtph/600-600.png", rarity: "Сверхредкая", color: "#3442db", weight: 20 },
+        { name: "ПАРНУХА", image: "https://i.ibb.co/ZpSGBcvc/image.png", rarity: "Эпическая", color: "#9B59B6", weight: 10 },
+        { name: "TURKISH KILLER", image: "https://i.ibb.co/Y7NcF17G/TURKISH-KILLER.png", rarity: "Мифическая", color: "#d61e1e", weight: 7 },
+        { name: "Иисус", image: "https://i.ibb.co/jdXbbr7/image.png", rarity: "Легендарная", color: "#F1C40F", weight: 3 },
+        { 
+            name: "АХнежка", 
+            image: "https://i.ibb.co/ZR6ZQrtQ/secret.png",
+            video: "secret_donotopen/secret.mp4",
+            rarity: "INCREDIBLE GAZZY", 
+            color: "#008a19", 
+            weight: 0.8, 
+            isSecret: true 
+        }
+    ];
 
-        function getRandomChar() {
-            let total = characters.reduce((s, c) => s + c.weight, 0);
-            let rnd = Math.random() * total;
-            let sum = 0;
-            for (let c of characters) { sum += c.weight; if (rnd <= sum) return c; }
+    let stats = JSON.parse(localStorage.getItem('kz_stats_final_v3')) || {};
+
+    function updateStatsUI() {
+        const grid = document.getElementById('stats-grid');
+        grid.innerHTML = '';
+        characters.forEach(c => {
+            const count = stats[c.name] || 0;
+            const slot = document.createElement('div');
+            slot.className = `stat-slot ${count > 0 ? 'unlocked' : 'locked'}`;
+            slot.innerHTML = `
+                <div class="stat-box" style="${count > 0 ? 'border-color:'+c.color : ''}">
+                    <span class="question-mark ${c.isSecret ? 'secret-placeholder' : ''}">${c.isSecret ? '???' : '?'}</span>
+                    <img src="${c.image}">
+                    <div class="stat-overlay" style="background: ${c.color}99; border: 1px solid ${c.color}; color: #121212;">${count}</div>
+                </div>
+            `;
+            grid.appendChild(slot);
+        });
+    }
+    document.getElementById('toggle-stats-btn').addEventListener('click', () => {
+        document.getElementById('stats-container').classList.toggle('show-stats');
+    });
+    updateStatsUI();
+
+    const track = document.getElementById('track');
+    const btn = document.getElementById('spin-btn');
+    const caseWidth = 150;
+    const winIndex = 75;
+
+    function getRandomChar() {
+        let total = characters.reduce((s, c) => s + c.weight, 0);
+        let rnd = Math.random() * total;
+        let sum = 0;
+        for (let c of characters) { sum += c.weight; if (rnd <= sum) return c; }
+    }
+
+    function getVisualChar() {
+        const visualChars = characters.map(c => ({...c, weight: c.isSecret ? c.weight / 10 : c.weight}));
+        let total = visualChars.reduce((s, c) => s + c.weight, 0);
+        let rnd = Math.random() * total;
+        let sum = 0;
+        for (let c of visualChars) { sum += c.weight; if (rnd <= sum) return c; }
+    }
+
+    function generateTrack(winner) {
+        track.innerHTML = '';
+        for (let i = 0; i < 90; i++) {
+            let char = (i === winIndex) ? winner : getVisualChar();
+            const div = document.createElement('div');
+            div.className = 'item';
+            let glow = (char.weight <= 10 || char.isSecret) ? `box-shadow: inset 0 0 20px ${char.color}; border-color: ${char.color};` : "";
+            div.innerHTML = `
+                <div class="item-content" style="${glow}">
+                    <img src="${char.image}">
+                    <div class="item-name">${char.name}</div>
+                    <span style="display:none">${char.isSecret ? 'IS_SECRET' : ''}</span>
+                    <div class="item-rarity" style="background: ${char.color}"></div>
+                </div>
+            `;
+            track.appendChild(div);
+        }
+    }
+
+    let isSpinning = false;
+    btn.addEventListener('click', () => {
+        if (isSpinning) return;
+        
+        const winner = getRandomChar();
+        const winVid = document.getElementById('win-video');
+        if (winner.isSecret) { 
+            winVid.src = winner.video; 
+            winVid.load(); 
         }
 
-        function getVisualChar() {
-            const visualChars = characters.map(c => ({...c, weight: c.isSecret ? c.weight / 10 : c.weight}));
-            let total = visualChars.reduce((s, c) => s + c.weight, 0);
-            let rnd = Math.random() * total;
-            let sum = 0;
-            for (let c of visualChars) { sum += c.weight; if (rnd <= sum) return c; }
-        }
+        generateTrack(winner);
+        isSpinning = true;
+        btn.disabled = true;
+        track.style.transition = 'none';
+        track.style.transform = 'translateX(0px)';
+        
+        setTimeout(() => {
+            const center = document.querySelector('.roulette-wrapper').offsetWidth / 2;
+            const stopPos = (winIndex * caseWidth) + (caseWidth / 2) - center + (Math.floor(Math.random() * 80) - 40);
+            track.style.transition = 'transform 6s cubic-bezier(0.1, 0, 0.1, 1)';
+            track.style.transform = `translateX(-${stopPos}px)`;
 
-        function generateTrack(winner) {
-            track.innerHTML = '';
-            for (let i = 0; i < 90; i++) {
-                let char = (i === winIndex) ? winner : getVisualChar();
-                const div = document.createElement('div');
-                div.className = 'item';
-                let glow = (char.weight <= 10 || char.isSecret) ? `box-shadow: inset 0 0 20px ${char.color}; border-color: ${char.color};` : "";
-                div.innerHTML = `
-                    <div class="item-content" style="${glow}">
-                        <img src="${char.image}">
-                        <div class="item-name">${char.name}</div>
-                        <span style="display:none">${char.isSecret ? 'IS_SECRET' : ''}</span>
-                        <div class="item-rarity" style="background: ${char.color}"></div>
-                    </div>
-                `;
-                track.appendChild(div);
-            }
-        }
-
-        let isSpinning = false;
-        btn.addEventListener('click', () => {
-            if (isSpinning) return;
-            
-            const winner = getRandomChar();
-            const winVid = document.getElementById('win-video');
-            if (winner.isSecret) { 
-                winVid.src = winner.video; 
-                winVid.load(); // Предзагрузка видео при старте рулетки
-            }
-
-            generateTrack(winner);
-            isSpinning = true;
-            btn.disabled = true;
-            track.style.transition = 'none';
-            track.style.transform = 'translateX(0px)';
-            
-            setTimeout(() => {
-                const center = document.querySelector('.roulette-wrapper').offsetWidth / 2;
-                const stopPos = (winIndex * caseWidth) + (caseWidth / 2) - center + (Math.floor(Math.random() * 80) - 40);
-                track.style.transition = 'transform 6s cubic-bezier(0.1, 0, 0.1, 1)';
-                track.style.transform = `translateX(-${stopPos}px)`;
-
-                let lastTick = 0;
-                const checkTick = () => {
-                    if (!isSpinning) return;
-                    const currentPos = Math.abs(track.getBoundingClientRect().left);
-                    const currentIndex = Math.floor((currentPos + center) / caseWidth);
-                    if (currentIndex > lastTick) {
-                        lastTick = currentIndex;
-                        const passingItem = track.children[currentIndex];
-                        if (passingItem && passingItem.innerHTML.includes("IS_SECRET")) {
-                            // Тут создаем звук на лету с громкостью из настроек
-                            const tempSecretSound = createAudio(AUDIO_SETTINGS.secret);
-                            tempSecretSound.play().catch(()=>{});
-                        } else {
-                            playTick();
-                        }
+            let lastTick = 0;
+            const checkTick = () => {
+                if (!isSpinning) return;
+                const currentPos = Math.abs(track.getBoundingClientRect().left);
+                const currentIndex = Math.floor((currentPos + center) / caseWidth);
+                if (currentIndex > lastTick) {
+                    lastTick = currentIndex;
+                    const passingItem = track.children[currentIndex];
+                    if (passingItem && passingItem.innerHTML.includes("IS_SECRET")) {
+                        const tempSecretSound = createAudio(AUDIO_SETTINGS.secret);
+                        tempSecretSound.play().catch(()=>{});
+                    } else {
+                        playTick();
                     }
-                    requestAnimationFrame(checkTick);
-                };
-                checkTick();
-            }, 100);
-
-            setTimeout(() => {
-                isSpinning = false;
-                btn.disabled = false;
-                stats[winner.name] = (stats[winner.name] || 0) + 1;
-                localStorage.setItem('kz_stats_final_v3', JSON.stringify(stats));
-                updateStatsUI();
-                
-                const winImg = document.getElementById('win-img');
-                const overlay = document.getElementById('win-overlay');
-
-                if (winner.isSecret) {
-                    winImg.style.display = 'none';
-                    winVid.style.display = 'block';
-                    winVid.style.borderColor = winner.color; // Красим рамку в цвет рарки
-                    winVid.muted = false; // Включаем звук видео
-                    
-                    winVid.play().catch(() => { 
-                        // Защита: если браузер всё равно блокирует видео со звуком, запускаем без звука
-                        winVid.muted = true; 
-                        winVid.play(); 
-                    });
-                } else {
-                    winImg.style.display = 'block';
-                    winVid.style.display = 'none';
-                    winImg.src = winner.image;
-                    winImg.style.borderColor = winner.color;
-                    
-                    let targetSound = winSound;
-                    if (winner.rarity === "Эпическая") targetSound = epicSound;
-                    else if (winner.rarity === "Мифическая") targetSound = mythicSound;
-                    else if (winner.rarity === "Легендарная") targetSound = legendarySound;
-                    
-                    targetSound.currentTime = 0;
-                    targetSound.play().catch(()=>{});
                 }
+                requestAnimationFrame(checkTick);
+            };
+            checkTick();
+        }, 100);
 
-                document.getElementById('win-name').innerText = winner.name;
-                document.getElementById('win-rarity-text').innerText = winner.rarity;
-                document.getElementById('win-rarity-text').style.color = winner.color;
-                overlay.style.display = 'flex';
-                setTimeout(() => overlay.classList.add('active'), 10);
-                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-            }, 6200);
-        });
+        setTimeout(() => {
+            isSpinning = false;
+            btn.disabled = false;
+            stats[winner.name] = (stats[winner.name] || 0) + 1;
+            localStorage.setItem('kz_stats_final_v3', JSON.stringify(stats));
+            updateStatsUI();
+            
+            const winImg = document.getElementById('win-img');
+            const overlay = document.getElementById('win-overlay');
 
-        generateTrack(characters[0]);
-    </script>
+            if (winner.isSecret) {
+                winImg.style.display = 'none';
+                winVid.style.display = 'block';
+                winVid.style.borderColor = winner.color; 
+                winVid.muted = false; 
+                
+                winVid.play().catch(() => { 
+                    winVid.muted = true; 
+                    winVid.play(); 
+                });
+            } else {
+                winImg.style.display = 'block';
+                winVid.style.display = 'none';
+                winImg.src = winner.image;
+                winImg.style.borderColor = winner.color;
+                
+                // 2. БРОНЕБОЙНОЕ ВОСПРОИЗВЕДЕНИЕ ЧЕРЕЗ CLONENODE
+                let targetSound = winSound;
+                if (winner.rarity === "Эпическая") targetSound = epicSound;
+                else if (winner.rarity === "Мифическая") targetSound = mythicSound;
+                else if (winner.rarity === "Легендарная") targetSound = legendarySound;
+                
+                // Создаем чистую копию звука и запускаем. Это спасет от залипания плеера.
+                const safePlaySound = targetSound.cloneNode(true);
+                safePlaySound.volume = targetSound.volume;
+                safePlaySound.play().catch(err => console.error("Звук блоканулся:", err));
+            }
+
+            document.getElementById('win-name').innerText = winner.name;
+            document.getElementById('win-rarity-text').innerText = winner.rarity;
+            document.getElementById('win-rarity-text').style.color = winner.color;
+            overlay.style.display = 'flex';
+            setTimeout(() => overlay.classList.add('active'), 10);
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        }, 6200);
+    });
+
+    generateTrack(characters[0]);
+</script>
 </body>
 </html>
