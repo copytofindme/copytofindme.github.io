@@ -58,14 +58,6 @@
         .stat-box img { width: 100%; height: 100%; object-fit: cover; display: none; }
         .unlocked .stat-box img { display: block; }
         
-        /* Знак вопроса под предметом */
-        .stat-placeholder {
-            font-size: 14px;
-            font-weight: 900;
-            margin-top: 5px;
-            color: #444; /* Серый цвет для невыбитых */
-        }
-        
         /* КУБИК СТАТИСТИКИ ПОВЕРХ КАРТИНКИ */
         .stat-overlay {
             position: absolute;
@@ -175,6 +167,7 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.ready();
+        tg.expand();
 
         // --- ДАННЫЕ ---
         const characters = [
@@ -194,19 +187,29 @@
 
         let stats = JSON.parse(localStorage.getItem('kz_stats')) || {};
 
-        // --- ЗВУКИ (ИСПРАВЛЕНИЕ ДЛЯ ТЕЛЕФОНОВ) ---
-        const tickSnd = new Audio('opencase_tick_sound_volume+.mp3');
+        // --- ПУЛ ЗВУКОВ (ИСПРАВЛЕНИЕ ДЛЯ ТЕЛЕФОНОВ) ---
+        const tickPool = Array.from({ length: 15 }, () => new Audio('opencase_tick_sound_volume+.mp3'));
+        let tickIndex = 0;
         const winSnd = new Audio('opencase_win_sound_volume+.mp3');
         const secretSnd = new Audio('secret_donotopen/re-zero-return-by-death.mp3');
 
-        // Функция "прогрева" звуков для iOS/Android
+        function playTick() {
+            const sound = tickPool[tickIndex];
+            sound.currentTime = 0;
+            sound.play().catch(() => {});
+            tickIndex = (tickIndex + 1) % tickPool.length;
+        }
+
+        // Разблокировка аудио при первом касании (для мобилок)
         function initAudio() {
-            [tickSnd, winSnd, secretSnd].forEach(s => {
-                s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(()=>{});
-            });
+            tickPool.forEach(s => { s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(()=>{}); });
+            winSnd.play().then(() => { winSnd.pause(); winSnd.currentTime = 0; }).catch(()=>{});
+            secretSnd.play().then(() => { secretSnd.pause(); secretSnd.currentTime = 0; }).catch(()=>{});
             document.removeEventListener('click', initAudio);
+            document.removeEventListener('touchstart', initAudio);
         }
         document.addEventListener('click', initAudio);
+        document.addEventListener('touchstart', initAudio);
 
         // --- СТАТИСТИКА ---
         function updateStatsUI() {
@@ -216,9 +219,6 @@
                 const count = stats[c.id] || 0;
                 const slot = document.createElement('div');
                 slot.className = `stat-slot ${count > 0 ? 'unlocked' : 'locked'}`;
-                
-                // Темный оттенок для текста внутри кубика
-                const darkColor = c.color + "CC"; 
 
                 slot.innerHTML = `
                     <div class="stat-box" style="${count > 0 ? 'border-color:'+c.color : ''}">
@@ -227,7 +227,6 @@
                             ${count}
                         </div>
                     </div>
-                    <div class="stat-placeholder">?</div>
                 `;
                 grid.appendChild(slot);
             });
@@ -240,6 +239,7 @@
         // --- РУЛЕТКА ---
         const track = document.getElementById('track');
         const btn = document.getElementById('spin-btn');
+        const caseWidth = 150;
 
         function generateTrack(winner) {
             track.innerHTML = '';
@@ -262,9 +262,7 @@
         let isSpinning = false;
         btn.onclick = () => {
             if (isSpinning) return;
-            const winner = characters[Math.floor(Math.random() * characters.length)]; // Для теста, лучше твой getRandomChar()
             
-            // Расчет шансов (твой оригинальный метод)
             function getRealWinner() {
                 let total = characters.reduce((s, c) => s + c.weight, 0);
                 let rnd = Math.random() * total;
@@ -281,21 +279,26 @@
 
             setTimeout(() => {
                 const center = document.querySelector('.roulette-wrapper').offsetWidth / 2;
-                const stopPos = (75 * 150) + 75 - center + (Math.random() * 60 - 30);
+                const stopPos = (75 * caseWidth) + (caseWidth / 2) - center + (Math.random() * 60 - 30);
                 track.style.transition = 'transform 6s cubic-bezier(0.1, 0, 0.1, 1)';
                 track.style.transform = `translateX(-${stopPos}px)`;
 
-                let lastIdx = 0;
-                const ticker = setInterval(() => {
-                    let curIdx = Math.floor((Math.abs(track.getBoundingClientRect().left) + center) / 150);
-                    if (curIdx !== lastIdx) {
-                        tickSnd.currentTime = 0; tickSnd.play().catch(()=>{});
-                        lastIdx = curIdx;
+                // Отслеживание тиков через requestAnimationFrame (самый плавный способ)
+                let lastTick = 0;
+                const checkTick = () => {
+                    if (!isSpinning) return;
+                    const currentPos = Math.abs(track.getBoundingClientRect().left);
+                    const currentIndex = Math.floor((currentPos + center) / caseWidth);
+                    if (currentIndex > lastTick) {
+                        lastTick = currentIndex;
+                        playTick();
+                        if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
                     }
-                }, 60);
+                    requestAnimationFrame(checkTick);
+                };
+                requestAnimationFrame(checkTick);
 
                 setTimeout(() => {
-                    clearInterval(ticker);
                     isSpinning = false; btn.disabled = false;
                     
                     stats[realWinner.id] = (stats[realWinner.id] || 0) + 1;
@@ -309,7 +312,7 @@
                     if (realWinner.isSecret) {
                         wImg.style.display = 'none'; wVid.style.display = 'block';
                         wVid.src = realWinner.video; wVid.style.borderColor = realWinner.color;
-                        wVid.play(); secretSnd.play();
+                        wVid.play(); secretSnd.play().catch(()=>{});
                     } else {
                         wVid.style.display = 'none'; wImg.style.display = 'block';
                         wImg.src = realWinner.image; wImg.style.borderColor = realWinner.color;
@@ -320,6 +323,7 @@
                     document.getElementById('win-rarity-text').innerText = realWinner.rarity;
                     document.getElementById('win-rarity-text').style.color = realWinner.color;
                     overlay.style.display = 'flex';
+                    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                 }, 6200);
             }, 50);
         };
