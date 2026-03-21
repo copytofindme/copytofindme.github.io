@@ -135,7 +135,8 @@
         }
         #win-img, #win-video { transform: scale(0.8); opacity: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         #win-overlay.active #win-img, #win-overlay.active #win-video { transform: scale(1); opacity: 1; }
-        #win-video { display: none; width: 220px; border-radius: 20px; border: 5px solid white; background: #000; }
+        /* Убрал белый бордер по умолчанию, он будет краситься через JS */
+        #win-video { display: none; width: 220px; border-radius: 20px; border: 5px solid transparent; background: #000; }
     </style>
 </head>
 <body>
@@ -157,7 +158,7 @@
     <div id="win-overlay" onclick="closeOverlay()">
         <h1 id="win-rarity-text">ВЫПАЛО!</h1>
         <img id="win-img" src="" style="width: 220px; border-radius: 20px; border: 5px solid white;">
-        <video id="win-video" playsinline loop muted></video>
+        <video id="win-video" playsinline loop></video>
         <h2 id="win-name">Название</h2>
         <p>Нажми, чтобы закрыть</p>
     </div>
@@ -165,21 +166,35 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.ready(); tg.expand();
-        
-        function createAudio(src, vol = 0.5) {
-            const a = new Audio(src);
-            a.volume = vol;
+
+        // ==========================================
+        // НАСТРОЙКИ ЗВУКОВ (ГРОМКОСТЬ И ПУТИ ЗДЕСЬ)
+        // ==========================================
+        const AUDIO_SETTINGS = {
+            tick:      { src: 'opencase_tick_sound_volume+.mp3', volume: 0.4 },
+            standard:  { src: 'opencase_win_sound_volume+.mp3', volume: 0.8 },
+            epic:      { src: 'sounds_of_win/item_drop3_rare.mp3', volume: 0.2 },
+            mythic:    { src: 'sounds_of_win/item_drop4_mythical.mp3', volume: 0.2 },
+            legendary: { src: 'sounds_of_win/item_drop5_legendary.mp3', volume: 0.2 },
+            secret:    { src: 'secret_donotopen/re-zero-return-by-death.mp3', volume: 0.4 }
+        };
+
+        function createAudio(config) {
+            const a = new Audio(config.src);
+            a.volume = config.volume;
+            a.preload = 'auto'; // Просим браузер грузить заранее
             return a;
         }
 
-        const tickPool = Array.from({ length: 12 }, () => createAudio('opencase_tick_sound_volume+.mp3', 0.4));
+        // Создаем пул звуков для рулетки и основные звуки
+        const tickPool = Array.from({ length: 12 }, () => createAudio(AUDIO_SETTINGS.tick));
         let tickIndex = 0;
         
-        const winSound = createAudio('opencase_win_sound_volume+.mp3', 0.8);
-        const epicSound = createAudio('sounds_of_win/item_drop3_rare.mp3', 0.2);
-        const mythicSound = createAudio('sounds_of_win/item_drop4_mythical.mp3', 0.2);
-        const legendarySound = createAudio('sounds_of_win/item_drop5_legendary.mp3', 0.2);
-        const secretSnd = createAudio('secret_donotopen/re-zero-return-by-death.mp3', 0.4);
+        const winSound = createAudio(AUDIO_SETTINGS.standard);
+        const epicSound = createAudio(AUDIO_SETTINGS.epic);
+        const mythicSound = createAudio(AUDIO_SETTINGS.mythic);
+        const legendarySound = createAudio(AUDIO_SETTINGS.legendary);
+        const secretSnd = createAudio(AUDIO_SETTINGS.secret);
 
         function playTick() {
             const s = tickPool[tickIndex];
@@ -188,9 +203,15 @@
             tickIndex = (tickIndex + 1) % tickPool.length;
         }
 
+        // Жесткая разблокировка звука при первом клике (для телефонов)
         function unlockAudio() {
-            [...tickPool, winSound, epicSound, mythicSound, legendarySound, secretSnd].forEach(s => {
-                s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(()=>{});
+            const allSounds = [...tickPool, winSound, epicSound, mythicSound, legendarySound, secretSnd];
+            allSounds.forEach(s => {
+                s.load(); // Принудительная загрузка
+                s.play().then(() => { 
+                    s.pause(); 
+                    s.currentTime = 0; 
+                }).catch(()=>{});
             });
             document.removeEventListener('click', unlockAudio);
             document.removeEventListener('touchstart', unlockAudio);
@@ -205,6 +226,7 @@
                 overlay.style.display = 'none';
                 const vid = document.getElementById('win-video');
                 vid.pause();
+                vid.muted = true; // Глушим видео при закрытии
             }, 300);
         }
         
@@ -295,7 +317,10 @@
             
             const winner = getRandomChar();
             const winVid = document.getElementById('win-video');
-            if (winner.isSecret) { winVid.src = winner.video; winVid.load(); }
+            if (winner.isSecret) { 
+                winVid.src = winner.video; 
+                winVid.load(); // Предзагрузка видео при старте рулетки
+            }
 
             generateTrack(winner);
             isSpinning = true;
@@ -318,7 +343,9 @@
                         lastTick = currentIndex;
                         const passingItem = track.children[currentIndex];
                         if (passingItem && passingItem.innerHTML.includes("IS_SECRET")) {
-                            createAudio('secret_donotopen/re-zero-return-by-death.mp3', 0.4).play().catch(()=>{});
+                            // Тут создаем звук на лету с громкостью из настроек
+                            const tempSecretSound = createAudio(AUDIO_SETTINGS.secret);
+                            tempSecretSound.play().catch(()=>{});
                         } else {
                             playTick();
                         }
@@ -341,7 +368,14 @@
                 if (winner.isSecret) {
                     winImg.style.display = 'none';
                     winVid.style.display = 'block';
-                    winVid.play().catch(() => { winVid.muted = true; winVid.play(); });
+                    winVid.style.borderColor = winner.color; // Красим рамку в цвет рарки
+                    winVid.muted = false; // Включаем звук видео
+                    
+                    winVid.play().catch(() => { 
+                        // Защита: если браузер всё равно блокирует видео со звуком, запускаем без звука
+                        winVid.muted = true; 
+                        winVid.play(); 
+                    });
                 } else {
                     winImg.style.display = 'block';
                     winVid.style.display = 'none';
