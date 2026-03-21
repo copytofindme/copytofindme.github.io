@@ -190,7 +190,7 @@
         #spin-btn:disabled { background: #444; }
 
         #win-overlay {
-            display: flex;
+            display: none;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.95);
@@ -199,15 +199,19 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            opacity: 0;
-            pointer-events: none;
+        }
+        
+        /* Анимируем только картинку и видео */
+        #win-img, #win-video {
             transform: scale(0.8);
+            opacity: 0;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        #win-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
+
+        #win-overlay.active #win-img, 
+        #win-overlay.active #win-video {
             transform: scale(1);
+            opacity: 1;
         }
 
         #win-video {
@@ -273,8 +277,10 @@
         document.addEventListener('touchstart', unlockAudio);
 
         function closeOverlay() {
-            document.getElementById('win-overlay').classList.remove('active');
+            const overlay = document.getElementById('win-overlay');
+            overlay.classList.remove('active');
             setTimeout(() => {
+                overlay.style.display = 'none';
                 const vid = document.getElementById('win-video');
                 vid.pause();
                 vid.src = ""; 
@@ -445,7 +451,13 @@
                 document.getElementById('win-name').innerText = winner.name;
                 document.getElementById('win-rarity-text').innerText = winner.rarity;
                 document.getElementById('win-rarity-text').style.color = winner.color;
-                overlay.classList.add('active');
+                
+                // Мгновенно показываем оверлей
+                overlay.style.display = 'flex';
+                // Запускаем анимацию контента через миг
+                setTimeout(() => {
+                    overlay.classList.add('active');
+                }, 10);
                 
                 if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             }, 6200);
