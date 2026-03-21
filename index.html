@@ -253,7 +253,12 @@
         
         const tickPool = Array.from({ length: 15 }, () => new Audio('opencase_tick_sound_volume+.mp3'));
         let tickIndex = 0;
+        
         const winSound = new Audio('opencase_win_sound_volume+.mp3');
+        const epicSound = new Audio('epic_win.mp3');
+        const mythicSound = new Audio('mythic_win.mp3');
+        const legendarySound = new Audio('legendary_win.mp3');
+        
         const secretSoundPath = 'secret_donotopen/re-zero-return-by-death.mp3';
         const secretSnd = new Audio(secretSoundPath);
         secretSnd.volume = 0.3;
@@ -267,8 +272,9 @@
 
         function unlockAudio() {
             tickPool.forEach(s => { s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(()=>{}); });
-            winSound.play().then(() => { winSound.pause(); winSound.currentTime = 0; }).catch(()=>{});
-            secretSnd.play().then(() => { secretSnd.pause(); secretSnd.currentTime = 0; }).catch(()=>{});
+            [winSound, epicSound, mythicSound, legendarySound, secretSnd].forEach(s => {
+                s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(()=>{});
+            });
             document.removeEventListener('click', unlockAudio);
             document.removeEventListener('touchstart', unlockAudio);
         }
@@ -356,7 +362,6 @@
         }
 
         function getVisualChar() {
-            // Уменьшаем вес АХнежки в 10 раз только для "пролетов"
             const visualChars = characters.map(c => ({
                 ...c,
                 weight: c.isSecret ? c.weight / 10 : c.weight
@@ -394,10 +399,11 @@
         btn.addEventListener('click', () => {
             if (isSpinning) return;
             
-            winSound.volume = 0;
-            winSound.play().then(() => { winSound.pause(); winSound.currentTime = 0; winSound.volume = 1; }).catch(()=>{});
-            secretSnd.volume = 0;
-            secretSnd.play().then(() => { secretSnd.pause(); secretSnd.currentTime = 0; secretSnd.volume = 0.3; }).catch(()=>{});
+            [winSound, epicSound, mythicSound, legendarySound, secretSnd].forEach(s => {
+                const oldVol = s.volume;
+                s.volume = 0;
+                s.play().then(() => { s.pause(); s.currentTime = 0; s.volume = oldVol; }).catch(()=>{});
+            });
 
             const winner = getRandomChar();
             
@@ -465,8 +471,14 @@
                     winVid.style.display = 'none';
                     winImg.src = winner.image;
                     winImg.style.borderColor = winner.color;
-                    winSound.currentTime = 0;
-                    winSound.play().catch((e)=>console.log("WinSound Error:", e));
+                    
+                    let targetSound = winSound;
+                    if (winner.rarity === "Эпическая") targetSound = epicSound;
+                    if (winner.rarity === "Мифическая") targetSound = mythicSound;
+                    if (winner.rarity === "Легендарная") targetSound = legendarySound;
+                    
+                    targetSound.currentTime = 0;
+                    targetSound.play().catch(()=>{});
                 }
 
                 document.getElementById('win-name').innerText = winner.name;
