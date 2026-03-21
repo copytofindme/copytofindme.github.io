@@ -175,11 +175,11 @@
         const tickPool = Array.from({ length: 12 }, () => createAudio('opencase_tick_sound_volume+.mp3', 0.4));
         let tickIndex = 0;
         
-        const winSound = createAudio('opencase_win_sound_volume+.mp3', 0.5);
-        const epicSound = createAudio('sounds_of_win/item_drop3_rare.mp3', 0.5);
-        const mythicSound = createAudio('sounds_of_win/item_drop4_mythical.mp3', 0.5);
-        const legendarySound = createAudio('sounds_of_win/item_drop5_legendary.mp3', 0.5);
-        const secretSnd = createAudio('secret_donotopen/re-zero-return-by-death.mp3', 0.5);
+        const winSound = createAudio('opencase_win_sound_volume+.mp3', 0.8);
+        const epicSound = createAudio('sounds_of_win/item_drop3_rare.mp3', 0.2);
+        const mythicSound = createAudio('sounds_of_win/item_drop4_mythical.mp3', 0.2);
+        const legendarySound = createAudio('sounds_of_win/item_drop5_legendary.mp3', 0.2);
+        const secretSnd = createAudio('secret_donotopen/re-zero-return-by-death.mp3', 0.4);
 
         function playTick() {
             const s = tickPool[tickIndex];
